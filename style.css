@@ -213,3 +213,40 @@ hr {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    margin: 10% auto;
+    width: 90%;
+    max-width: 400px;
+}
+
+.action-btn {
+    width: auto;
+    padding: 5px 10px;
+    margin-left: 5px;
+    font-size: 10px;
+    display: inline-block;
+}
+
+.edit-btn { background-color: #fbbf24; color: #000; }
+.del-btn { background-color: #fb7185; color: #fff; }
+
+.account-row, .debt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #334155;
+}
+
+/* Ensure table buttons don't break layout */
+td .action-btn { margin-top: 0; }
