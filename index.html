@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wealth Tracker Pro - Professional Auditor</title>
+    <title>Wealth Tracker Pro - Financial Auditor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -28,12 +28,14 @@
                     <div id="acc-liq" class="sec-accum"></div>
                 </div>
                 <form id="form-liquid" class="entry-form">
-                    <input type="text" id="liq-name" placeholder="Bank" required>
-                    <input type="number" id="liq-amount" placeholder="Amount" step="0.01" required>
-                    <select id="liq-curr" class="curr-list"></select>
-                    <button type="submit">Add</button>
+                    <div class="input-row">
+                        <input type="text" id="liq-name" placeholder="Bank" required>
+                        <input type="number" id="liq-amount" placeholder="Amount $" step="0.01" required>
+                        <select id="liq-curr" class="curr-list"></select>
+                        <button type="submit">Add</button>
+                    </div>
                 </form>
-                <div class="scroll-area"><table id="table-liquid"><thead><tr><th>Bank</th><th>Amount</th><th>Value</th><th>Del</th></tr></thead><tbody></tbody></table></div>
+                <div class="scroll-area"><table id="table-liquid"><thead><tr><th>Bank</th><th>Amount $</th><th>Value $</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
             </section>
 
             <section class="card">
@@ -42,10 +44,19 @@
                     <div id="acc-fix" class="sec-accum surplus"></div>
                 </div>
                 <form id="form-fixed" class="entry-form">
-                    <div class="input-row"><input type="text" id="fix-name" placeholder="Bank" required><input type="number" id="fix-amount" placeholder="Principal" step="0.01" required><select id="fix-curr" class="curr-list"></select></div>
-                    <div class="input-row"><input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required><input type="number" id="fix-duration" placeholder="Mos" required><input type="date" id="fix-start" required><button type="submit">Add</button></div>
+                    <div class="input-row">
+                        <input type="text" id="fix-name" placeholder="Bank" required>
+                        <input type="number" id="fix-amount" placeholder="Principal $" step="0.01" required>
+                        <select id="fix-curr" class="curr-list"></select>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
+                        <input type="number" id="fix-duration" placeholder="Duration (Months)" required>
+                        <input type="date" id="fix-start" title="Start Date" required>
+                        <button type="submit">Add</button>
+                    </div>
                 </form>
-                <div class="scroll-area"><table id="table-fixed"><thead><tr><th>Bank</th><th>Rate</th><th>Ends</th><th>Interest</th><th>Total</th><th>Del</th></tr></thead><tbody></tbody></table></div>
+                <div class="scroll-area"><table id="table-fixed"><thead><tr><th>Bank</th><th>Rate</th><th>End Date</th><th>Interest $</th><th>Total $</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
             </section>
 
             <section class="card">
@@ -54,12 +65,14 @@
                     <div id="acc-stk" class="sec-accum"></div>
                 </div>
                 <form id="form-stocks" class="entry-form">
-                    <input type="text" id="stk-ticker" placeholder="Ticker" required>
-                    <input type="number" id="stk-qty" placeholder="Qty" step="0.01" required>
-                    <input type="number" id="stk-buy" placeholder="Avg Buy $" step="0.01" required>
-                    <button type="submit">Add</button>
+                    <div class="input-row">
+                        <input type="text" id="stk-ticker" placeholder="Ticker" required>
+                        <input type="number" id="stk-qty" placeholder="Qty" step="0.01" required>
+                        <input type="number" id="stk-buy" placeholder="Avg Buy $" step="0.01" required>
+                        <button type="submit">Add</button>
+                    </div>
                 </form>
-                <div class="scroll-area"><table id="table-stocks"><thead><tr><th>Ticker</th><th>Qty</th><th>Avg $</th><th>Live $</th><th>P/L</th><th>Del</th></tr></thead><tbody></tbody></table></div>
+                <div class="scroll-area"><table id="table-stocks"><thead><tr><th>Ticker</th><th>Qty</th><th>Avg $</th><th>Live $</th><th>P/L</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
             </section>
 
             <section class="card">
@@ -68,12 +81,14 @@
                     <div id="acc-debt" class="sec-accum loss"></div>
                 </div>
                 <form id="form-debt" class="entry-form">
-                    <input type="text" id="debt-name" placeholder="Name" required>
-                    <input type="number" id="debt-amount" placeholder="Owed" step="0.01" required>
-                    <select id="debt-curr" class="curr-list"></select>
-                    <button type="submit">Add</button>
+                    <div class="input-row">
+                        <input type="text" id="debt-name" placeholder="Name" required>
+                        <input type="number" id="debt-amount" placeholder="Owed $" step="0.01" required>
+                        <select id="debt-curr" class="curr-list"></select>
+                        <button type="submit">Add</button>
+                    </div>
                 </form>
-                <div class="scroll-area"><table id="table-debt"><thead><tr><th>Name</th><th>Owed</th><th>Value</th><th>Del</th></tr></thead><tbody></tbody></table></div>
+                <div class="scroll-area"><table id="table-debt"><thead><tr><th>Name</th><th>Owed $</th><th>Value $</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
             </section>
         </div>
 
