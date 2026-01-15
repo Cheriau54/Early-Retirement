@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wealth Tracker Pro</title>
+    <title>Wealth Tracker Pro - Financial Auditor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -10,96 +10,110 @@
         <header>
             <div class="header-main">
                 <h1 id="editable-title" contenteditable="true">Wealth Tracker</h1>
-                <div class="planner-config">
-                    <label>Master Pivot Currency:</label>
+                <div class="master-pivot">
+                    <label>Master Dashboard Currency:</label>
                     <select id="master-currency" class="curr-list"></select>
                 </div>
             </div>
-            <div class="net-worth-display">
-                <small>Total Consolidated Net Worth</small>
-                <div id="total-net-worth">---</div>
+            <div class="net-worth-card">
+                <small>Consolidated Net Worth</small>
+                <div id="total-net-worth">0.00</div>
             </div>
         </header>
 
-        <div class="main-grid">
+        <div class="asset-grid">
             <section class="card">
-                <h3>1. Liquid Assets</h3>
-                <form id="bank-form">
-                    <div class="form-row">
-                        <input type="text" id="bank-name" placeholder="Bank Name" required>
-                        <input type="number" id="bank-amount" placeholder="Amount" step="0.01" required>
-                        <select id="bank-currency" class="curr-list"></select>
+                <h3>1. Liquid Assets (Cash)</h3>
+                <form id="form-liquid">
+                    <div class="input-row">
+                        <input type="text" id="liq-name" placeholder="Bank Name" required>
+                        <input type="number" id="liq-amount" placeholder="Amount" step="0.01" required>
+                        <select id="liq-curr" class="curr-list"></select>
                         <button type="submit">Add</button>
                     </div>
                 </form>
-                <div class="table-container"><table id="table-liquid"><thead><tr><th>Name</th><th>Amount</th><th>Master Value</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+                <table id="table-liquid">
+                    <thead><tr><th>Bank</th><th>Amount</th><th>Weight</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </section>
 
             <section class="card">
                 <h3>2. Fixed Savings (Term Deposits)</h3>
-                <form id="savings-form">
-                    <div class="form-row">
-                        <input type="text" id="sav-name" placeholder="Bank" required>
-                        <input type="number" id="sav-amount" placeholder="Principal" step="0.01" required>
-                        <select id="sav-currency" class="curr-list"></select>
+                <form id="form-fixed">
+                    <div class="input-row">
+                        <input type="text" id="fix-name" placeholder="Bank" required>
+                        <input type="number" id="fix-amount" placeholder="Principal" step="0.01" required>
+                        <select id="fix-curr" class="curr-list"></select>
                     </div>
-                    <div class="form-row">
-                        <input type="number" id="sav-rate" placeholder="Rate %" step="0.01" required>
-                        <input type="number" id="sav-duration" placeholder="Months" required>
-                        <input type="date" id="sav-start" required>
+                    <div class="input-row">
+                        <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
+                        <input type="number" id="fix-duration" placeholder="Months" required>
+                        <input type="date" id="fix-start" required>
                         <button type="submit">Add</button>
                     </div>
                 </form>
-                <div class="table-container"><table id="table-fixed"><thead><tr><th>Bank</th><th>Principal</th><th>Rate</th><th>Interest</th><th>Total Value</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+                <table id="table-fixed">
+                    <thead><tr><th>Bank</th><th>Principal</th><th>Rate</th><th>Start</th><th>End</th><th>Interest</th><th>Total</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </section>
 
             <section class="card">
                 <h3>3. Equities (USD)</h3>
-                <form id="stock-form">
-                    <div class="form-row">
-                        <input type="text" id="stock-ticker" placeholder="Ticker" required>
-                        <input type="number" id="stock-shares" placeholder="Qty" step="0.01" required>
-                        <input type="number" id="stock-buy-price" placeholder="Avg Buy $" step="0.01" required>
+                <form id="form-stocks">
+                    <div class="input-row">
+                        <input type="text" id="stk-ticker" placeholder="Ticker" required>
+                        <input type="number" id="stk-qty" placeholder="Shares" step="0.01" required>
+                        <input type="number" id="stk-buy" placeholder="Avg Buy $" step="0.01" required>
                         <button type="submit">Add</button>
                     </div>
                 </form>
-                <div class="table-container"><table id="table-stocks"><thead><tr><th>Ticker</th><th>Qty</th><th>Avg Price</th><th>Live Price</th><th>P/L</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+                <table id="table-stocks">
+                    <thead><tr><th>Ticker</th><th>Qty</th><th>Avg Price</th><th>Live Price</th><th>P/L</th><th>Total</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </section>
 
             <section class="card">
                 <h3>4. Liabilities</h3>
-                <form id="debt-form">
-                    <div class="form-row">
-                        <input type="text" id="debt-name" placeholder="Debt Name" required>
+                <form id="form-debt">
+                    <div class="input-row">
+                        <input type="text" id="debt-name" placeholder="Name" required>
                         <input type="number" id="debt-amount" placeholder="Owed" step="0.01" required>
-                        <select id="debt-currency" class="curr-list"></select>
+                        <select id="debt-curr" class="curr-list"></select>
                         <button type="submit">Add</button>
                     </div>
                 </form>
-                <div class="table-container"><table id="table-debt"><thead><tr><th>Name</th><th>Owed</th><th>Master Val</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+                <table id="table-debt">
+                    <thead><tr><th>Name</th><th>Owed</th><th>Master Val</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </section>
         </div>
 
-        <section class="card planner-card">
-            <h3>Retirement Strategy & Deduction Logic</h3>
-            <div class="planner-config-row">
-                <div class="p-input">Target Goal (<span class="m-curr"></span>): <input type="number" id="target-goal" value="1000000"></div>
-                <div class="p-input">Years Left: <input type="number" id="years-to-goal" value="10"></div>
-                <div class="p-input">Monthly Income: <input type="number" id="monthly-income" value="0"> <select id="income-currency" class="curr-list"></select></div>
-                <button id="calc-trigger-btn" class="trigger-btn">Run Retirement Calculation</button>
-            </div>
-            
-            <div id="detailed-deduction" class="logic-box">
-                <p style="text-align:center; color:#82868b;">Click the button above to calculate your strategy.</p>
-            </div>
-            
-            <div class="progress-bar-wrapper">
-                <div id="progress-fill"></div>
-                <span id="progress-text">0% Achieved</span>
-            </div>
-        </section>
+        <div class="strategy-row">
+            <section class="card planner-card">
+                <h3>Retirement Planning & Logical Deduction</h3>
+                <div class="planner-inputs">
+                    <div class="p-field">Goal (<span class="m-curr">HKD</span>): <input type="number" id="target-goal" value="1000000"></div>
+                    <div class="p-field">Years Left: <input type="number" id="years-to-goal" value="10"></div>
+                    <div class="p-field">Income: <input type="number" id="monthly-income" value="0"> <select id="income-curr" class="curr-list"></select></div>
+                    <button id="calc-btn">Run Analysis</button>
+                </div>
+                <div id="logic-output" class="logic-box"></div>
+                <div class="progress-container"><div id="progress-bar"></div><span id="progress-text">0%</span></div>
+            </section>
 
-        <button id="reset-btn" class="danger-btn">Reset All Data</button>
+            <section class="card">
+                <h3>Portfolio Optimization</h3>
+                <div id="rebalance-box" class="advice-box">
+                    Enter details above and run analysis to see optimization tips.
+                </div>
+            </section>
+        </div>
+        
+        <button id="reset-btn" class="danger-btn">Wipe All Records</button>
     </div>
     <script src="script.js"></script>
 </body>
