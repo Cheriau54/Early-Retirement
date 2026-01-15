@@ -207,3 +207,7 @@ td {
   .input-grid, .dashboard-grid { grid-template-columns: 1fr; }
   header { flex-direction: column; text-align: center; gap: 15px; }
 }
+
+.debt-row { color: var(--danger-color); display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #334155; }
+.mpf-row { color: #facc15; font-weight: bold; } /* Yellow for pension assets */
+hr { border: 0; border-top: 1px solid var(--border-color); margin: 20px 0; }
