@@ -1,235 +1,157 @@
-const FX_API_KEY = '393a43661559351810312743';
-const STOCK_API_KEY = 'RCOIHB62BAXECU2U';
-const CURRENCIES = ["HKD", "USD", "EUR", "CNY", "GBP", "JPY", "KRW", "AUD", "CAD", "VND", "THB", "IDR", "SGD", "PHP"];
+const FX_API = '393a43661559351810312743';
+const STOCK_API = 'RCOIHB62BAXECU2U';
+const CURRENCIES = ["HKD", "USD", "EUR", "CNY", "GBP", "JPY", "KRW", "AUD", "CAD", "SGD"];
 
-let mySavings = JSON.parse(localStorage.getItem('mySavings')) || [];
-let termSavings = JSON.parse(localStorage.getItem('termSavings')) || [];
-let myStocks = JSON.parse(localStorage.getItem('myStocks')) || [];
-let myDebts = JSON.parse(localStorage.getItem('myDebts')) || [];
-let userSettings = JSON.parse(localStorage.getItem('userSettings')) || { 
-    target: 1000000, 
-    years: 10, 
-    masterCurr: "HKD", 
-    title: "Wealth Tracker" 
+let db = {
+    liquid: JSON.parse(localStorage.getItem('liquid')) || [],
+    fixed: JSON.parse(localStorage.getItem('fixed')) || [],
+    stocks: JSON.parse(localStorage.getItem('stocks')) || [],
+    debt: JSON.parse(localStorage.getItem('debt')) || [],
+    settings: JSON.parse(localStorage.getItem('settings')) || { masterCurr: "HKD" }
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Populate Currencies
-    const masters = document.getElementById('master-currency');
-    CURRENCIES.forEach(c => {
-        masters.add(new Option(c, c));
-        document.querySelectorAll('.curr-list').forEach(list => list.add(new Option(c, c)));
-    });
-
-    // Set UI State
-    document.getElementById('editable-title').innerText = userSettings.title;
-    document.getElementById('page-title-meta').innerText = userSettings.title;
-    masters.value = userSettings.masterCurr;
-    document.getElementById('target-goal').value = userSettings.target;
-    document.getElementById('years-to-goal').value = userSettings.years;
-
-    initDashboard();
-    setupListeners();
+    initUI();
+    refreshDisplay();
 });
 
-function setupListeners() {
-    // Editable Title Listener
-    const titleEl = document.getElementById('editable-title');
-    titleEl.addEventListener('blur', () => {
-        userSettings.title = titleEl.innerText;
-        document.getElementById('page-title-meta').innerText = titleEl.innerText;
-        saveSettings();
+function initUI() {
+    document.querySelectorAll('.curr-list').forEach(select => {
+        CURRENCIES.forEach(c => select.add(new Option(c, c)));
     });
-
+    document.getElementById('master-currency').value = db.settings.masterCurr;
+    
+    // Listeners
     document.getElementById('master-currency').onchange = (e) => {
-        userSettings.masterCurr = e.target.value;
-        saveSettings();
+        db.settings.masterCurr = e.target.value;
+        save(); refreshDisplay();
     };
 
     document.getElementById('bank-form').onsubmit = (e) => {
         e.preventDefault();
-        mySavings.push({ 
-            name: document.getElementById('bank-name').value, 
-            amount: parseFloat(document.getElementById('bank-amount').value), 
-            currency: document.getElementById('bank-currency').value 
-        });
-        saveData();
-    };
-
-    document.getElementById('savings-form').onsubmit = (e) => {
-        e.preventDefault();
-        const principal = parseFloat(document.getElementById('sav-amount').value);
-        const rate = parseFloat(document.getElementById('sav-rate').value);
-        const months = parseFloat(document.getElementById('sav-duration').value);
-        const profit = principal * (rate / 100) * (months / 12);
-        let end = new Date(document.getElementById('sav-start').value || new Date());
-        end.setMonth(end.getMonth() + Math.round(months));
-
-        termSavings.push({ 
-            name: document.getElementById('sav-name').value, 
-            principal, 
-            currency: document.getElementById('sav-currency').value, 
-            rate, 
-            total: principal + profit, 
-            end: end.toISOString().split('T')[0] 
-        });
-        saveData();
+        const name = document.getElementById('bank-name').value;
+        const curr = document.getElementById('bank-currency').value;
+        const amt = parseFloat(document.getElementById('bank-amount').value);
+        let existing = db.liquid.find(i => i.name === name && i.currency === curr);
+        if(existing) existing.amount += amt; else db.liquid.push({name, amount: amt, currency: curr});
+        save(); refreshDisplay(); e.target.reset();
     };
 
     document.getElementById('stock-form').onsubmit = (e) => {
         e.preventDefault();
-        myStocks.push({ 
-            symbol: document.getElementById('stock-ticker').value.toUpperCase(), 
-            shares: parseFloat(document.getElementById('stock-shares').value), 
-            avgPrice: parseFloat(document.getElementById('stock-buy-price').value) 
-        });
-        saveData();
-    };
-
-    document.getElementById('debt-form').onsubmit = (e) => {
-        e.preventDefault();
-        myDebts.push({ 
-            name: document.getElementById('debt-name').value, 
-            amount: parseFloat(document.getElementById('debt-amount').value), 
-            currency: document.getElementById('debt-currency').value 
-        });
-        saveData();
-    };
-
-    document.getElementById('target-goal').onchange = saveSettings;
-    document.getElementById('years-to-goal').onchange = saveSettings;
-    document.getElementById('reset-btn').onclick = () => { if(confirm("Clear all?")) { localStorage.clear(); location.reload(); }};
-    document.getElementById('calc-rebalance').onclick = calculateRebalance;
-}
-
-async function initDashboard() {
-    const mCurr = userSettings.masterCurr;
-    document.querySelectorAll('.m-curr').forEach(el => el.innerText = mCurr);
-
-    try {
-        const fxRes = await fetch(`https://v6.exchangerate-api.com/v6/${FX_API_KEY}/latest/${mCurr}`);
-        const fxData = await fxRes.json();
-        const rates = fxData.conversion_rates;
-
-        let breakdown = { liquid: 0, term: 0, stocks: 0, debt: 0 };
-        let weightedSum = 0;
-
-        // 1. Liquid
-        let liqText = [];
-        mySavings.forEach(s => {
-            const valMaster = s.amount / rates[s.currency];
-            breakdown.liquid += valMaster;
-            liqText.push(`${s.amount.toLocaleString()} ${s.currency}`);
-        });
-        document.getElementById('liquid-accumulated').innerText = "Total: " + (liqText.join(' | ') || "0");
-
-        // 2. Fixed
-        let fixText = [];
-        termSavings.forEach(s => {
-            const valMaster = s.total / rates[s.currency];
-            breakdown.term += valMaster;
-            weightedSum += (valMaster * s.rate);
-            fixText.push(`${s.total.toLocaleString()} ${s.currency}`);
-        });
-        document.getElementById('fixed-accumulated').innerText = "Total: " + (fixText.join(' | ') || "0");
-
-        // 3. Stocks (Fetch Live)
-        let stockUSDTotal = 0;
-        for (let s of myStocks) {
-            const sRes = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${s.symbol}&apikey=${STOCK_API_KEY}`);
-            const sData = await sRes.json();
-            const live = parseFloat(sData["Global Quote"]?.["05. price"]) || s.avgPrice;
-            const valMaster = (s.shares * live) / rates.USD;
-            breakdown.stocks += valMaster;
-            stockUSDTotal += (s.shares * live);
-            weightedSum += (valMaster * 7.0); // Assumption: Stocks grow at 7%
-            await new Promise(r => setTimeout(r, 400));
+        const ticker = document.getElementById('stock-ticker').value.toUpperCase();
+        const shares = parseFloat(document.getElementById('stock-shares').value);
+        const buy = parseFloat(document.getElementById('stock-buy-price').value);
+        let existing = db.stocks.find(s => s.ticker === ticker);
+        if(existing) {
+            existing.buyPrice = ((existing.buyPrice * existing.shares) + (buy * shares)) / (existing.shares + shares);
+            existing.shares += shares;
+        } else {
+            db.stocks.push({ ticker, shares, buyPrice: buy });
         }
-        document.getElementById('stock-accumulated').innerText = `Accumulated: $${stockUSDTotal.toLocaleString()} USD`;
+        save(); refreshDisplay(); e.target.reset();
+    };
 
-        // 4. Debt
-        let debtText = [];
-        myDebts.forEach(d => {
-            const valMaster = d.amount / rates[d.currency];
-            breakdown.debt += valMaster;
-            debtText.push(`${d.amount.toLocaleString()} ${d.currency}`);
-        });
-        document.getElementById('debt-accumulated').innerText = "Total: " + (debtText.join(' | ') || "0");
-
-        const finalWealth = breakdown.liquid + breakdown.term + breakdown.stocks - breakdown.debt;
-        const totalInvested = breakdown.liquid + breakdown.term + breakdown.stocks;
-        const avgReturn = totalInvested > 0 ? (weightedSum / totalInvested) : 0;
-
-        document.getElementById('total-net-worth').innerText = `${finalWealth.toLocaleString(undefined, {max:0})} ${mCurr}`;
-        document.getElementById('annual-return').value = avgReturn.toFixed(2) + "%";
-
-        renderDetailedPlanner(finalWealth, breakdown, avgReturn, mCurr);
-        window.currentGlobals = { finalWealth, breakdown, avgReturn, rates };
-
-    } catch(e) { console.error("FX/Stock Fetch Error:", e); }
+    document.getElementById('calc-trigger-btn').onclick = () => runRetirementMath();
+    document.getElementById('reset-btn').onclick = () => { localStorage.clear(); location.reload(); };
 }
 
-function renderDetailedPlanner(wealth, b, ret, curr) {
-    const target = parseFloat(document.getElementById('target-goal').value);
-    const years = parseFloat(document.getElementById('years-to-goal').value);
-    const r = (ret / 100) / 12;
-    const n = years * 12;
-    const fv = wealth * Math.pow(1 + r, n);
-    const gap = Math.max(0, target - fv);
+async function refreshDisplay() {
+    const mCurr = db.settings.masterCurr;
+    document.querySelectorAll('.m-curr').forEach(el => el.innerText = mCurr);
+    
+    // 1. Fetch Rates
+    const fx = await fetch(`https://v6.exchangerate-api.com/v6/${FX_API}/latest/${mCurr}`).then(r => r.json());
+    const rates = fx.conversion_rates;
 
-    document.getElementById('logic-breakdown').innerHTML = `
-        <div class="logic-item"><span>Liquid Assets (${curr}):</span><span>${b.liquid.toLocaleString(undefined,{max:0})}</span></div>
-        <div class="logic-item"><span>Fixed Savings (${curr}):</span><span>${b.term.toLocaleString(undefined,{max:0})}</span></div>
-        <div class="logic-item"><span>Stock Equity (${curr}):</span><span>${b.stocks.toLocaleString(undefined,{max:0})}</span></div>
-        <div class="logic-item" style="color:var(--danger)"><span>Liabilities (${curr}):</span><span>-${b.debt.toLocaleString(undefined,{max:0})}</span></div>
-        <div class="logic-item logic-total"><span>TOTAL ACCUMULATED (${curr}):</span><span>${wealth.toLocaleString(undefined,{max:0})}</span></div>
-        <div class="logic-item" style="margin-top:10px; border-top:1px dashed #555">
-            <span>Est. Growth Over ${years} Years:</span><span>+${(fv - wealth).toLocaleString(undefined,{max:0})}</span>
-        </div>
-        <div class="logic-item logic-total" style="color:var(--accent)"><span>GAP TO REACH GOAL:</span><span>${gap.toLocaleString(undefined,{max:0})} ${curr}</span></div>
+    let totals = { liq: 0, fix: 0, stk: 0, dbt: 0, yield: 0 };
+
+    // 2. Render Liquid
+    const liqBody = document.querySelector('#table-liquid tbody');
+    liqBody.innerHTML = '';
+    db.liquid.forEach((item, i) => {
+        const mVal = item.amount / rates[item.currency];
+        totals.liq += mVal;
+        liqBody.innerHTML += `<tr><td>${item.name}</td><td>${item.amount} ${item.currency}</td><td>${mVal.toFixed(0)} ${mCurr}</td><td><button onclick="del('liquid',${i})">✕</button></td></tr>`;
+    });
+
+    // 3. Render Fixed
+    const fixBody = document.querySelector('#table-fixed tbody');
+    fixBody.innerHTML = '';
+    db.fixed.forEach((item, i) => {
+        const interest = item.principal * (item.rate/100) * (item.duration/12);
+        const totalMaster = (item.principal + interest) / rates[item.currency];
+        totals.fix += totalMaster;
+        totals.yield += (totalMaster * (item.rate/100));
+        fixBody.innerHTML += `<tr><td>${item.name}</td><td>${item.principal} ${item.currency}</td><td>${item.rate}%</td><td class="surplus">+${interest.toFixed(0)}</td><td>${(item.principal+interest).toLocaleString()}</td><td><button onclick="del('fixed',${i})">✕</button></td></tr>`;
+    });
+
+    // 4. Render Equities
+    const stkBody = document.querySelector('#table-stocks tbody');
+    stkBody.innerHTML = 'Loading Live Prices...';
+    let stkHtml = '';
+    for (let s of db.stocks) {
+        const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${s.ticker}&apikey=${STOCK_API}`).then(r => r.json());
+        const live = parseFloat(res["Global Quote"]?.["05. price"]) || s.buyPrice;
+        const pl = (live - s.buyPrice) * s.shares;
+        const mVal = (s.shares * live) / rates.USD;
+        totals.stk += mVal;
+        totals.yield += (mVal * 0.07); // 7% Benchmark
+        stkHtml += `<tr><td>${s.ticker}</td><td>${s.shares}</td><td>$${s.buyPrice}</td><td>$${live.toFixed(2)}</td><td class="${pl>=0?'surplus':'loss'}">${pl.toFixed(2)}</td><td><button onclick="del('stocks',${db.stocks.indexOf(s)})">✕</button></td></tr>`;
+    }
+    stkBody.innerHTML = stkHtml;
+
+    // 5. Render Debt
+    const dbtBody = document.querySelector('#table-debt tbody');
+    dbtBody.innerHTML = '';
+    db.debt.forEach((item, i) => {
+        const mVal = item.amount / rates[item.currency];
+        totals.dbt += mVal;
+        dbtBody.innerHTML += `<tr><td>${item.name}</td><td>${item.amount} ${item.currency}</td><td class="loss">-${mVal.toFixed(0)}</td><td><button onclick="del('debt',${i})">✕</button></td></tr>`;
+    });
+
+    const netWorth = totals.liq + totals.fix + totals.stk - totals.dbt;
+    document.getElementById('total-net-worth').innerText = `${netWorth.toLocaleString(undefined,{max:0})} ${mCurr}`;
+    
+    window.lastCalculatedNW = netWorth;
+    window.lastCalculatedYield = (totals.yield / (totals.liq + totals.fix + totals.stk)) || 0;
+    window.lastRates = rates;
+}
+
+function runRetirementMath() {
+    const mCurr = db.settings.masterCurr;
+    const goal = parseFloat(document.getElementById('target-goal').value);
+    const years = parseFloat(document.getElementById('years-to-goal').value);
+    const income = parseFloat(document.getElementById('monthly-income').value) / window.lastRates[document.getElementById('income-currency').value];
+    
+    const nw = window.lastCalculatedNW;
+    const y = window.lastCalculatedYield;
+    const r = y / 12;
+    const n = years * 12;
+    
+    // Future Value of current assets: FV = PV * (1 + r)^n
+    const fv = nw * Math.pow(1 + r, n);
+    const gap = Math.max(0, goal - fv);
+    
+    // Required Monthly Saving (Annuity Formula)
+    const monthlyNeeded = gap > 0 ? (gap * r) / (Math.pow(1 + r, n) - 1) : 0;
+    const surplus = income - monthlyNeeded;
+
+    
+
+    document.getElementById('detailed-deduction').innerHTML = `
+        <div class="logic-row"><span>Portfolio Weighted Yield:</span><span>${(y*100).toFixed(2)}%</span></div>
+        <div class="logic-row"><span>Future Value of Assets (in ${years}yr):</span><span>${fv.toLocaleString(undefined,{max:0})} ${mCurr}</span></div>
+        <div class="logic-row"><span>Remaining Gap to Goal:</span><span class="loss">${gap.toLocaleString(undefined,{max:0})} ${mCurr}</span></div>
+        <hr>
+        <div class="logic-row"><span><b>REQUIRED SAVING PER MONTH:</b></span><span><b>${monthlyNeeded.toLocaleString(undefined,{max:0})} ${mCurr}</b></span></div>
+        <div class="logic-row"><span>Income Surplus/Deficit:</span><span class="${surplus>=0?'surplus':'loss'}">${surplus.toLocaleString(undefined,{max:0})} ${mCurr}</span></div>
     `;
 
-    const monthly = gap > 0 ? gap / ((Math.pow(1 + r, n) - 1) / r) : 0;
-    document.getElementById('goal-progress-bar').style.width = Math.min((wealth/target)*100, 100) + "%";
-    document.getElementById('progress-percent').innerText = ((wealth/target)*100).toFixed(1) + "% Achieved";
-    document.getElementById('calculator-result').innerHTML = `<h2 style="text-align:center; margin-top:20px;">${monthly.toLocaleString(undefined,{max:0})} ${curr} / Month Required</h2>`;
+    const prog = Math.min((nw/goal)*100, 100);
+    document.getElementById('progress-fill').style.width = prog + "%";
+    document.getElementById('progress-text').innerText = prog.toFixed(1) + "% Achieved";
 }
 
-function calculateRebalance() {
-    const targetRet = parseFloat(document.getElementById('rebalance-target').value);
-    const resDiv = document.getElementById('rebalance-result');
-    if(!targetRet || !window.currentGlobals) return;
-
-    const { finalWealth, breakdown, avgReturn } = window.currentGlobals;
-    const totalAssets = breakdown.liquid + breakdown.term + breakdown.stocks;
-    
-    // Logic: How much liquid (0%) to move to savings (assume 4.5% yield) to raise total return
-    const currentSum = (avgReturn / 100) * totalAssets;
-    const targetSum = (targetRet / 100) * totalAssets;
-    const moveNeeded = (targetSum - currentSum) / 0.045;
-
-    resDiv.style.display = 'block';
-    if(moveNeeded > breakdown.liquid) {
-        resDiv.innerHTML = `<div class="logic-item" style="color:var(--danger)">Not enough liquid cash to hit ${targetRet}% return through rebalancing.</div>`;
-    } else {
-        resDiv.innerHTML = `
-            <div class="logic-item"><span>Transfer Cash to Savings (4.5%):</span><span>${moveNeeded.toLocaleString(undefined,{max:0})} ${userSettings.masterCurr}</span></div>
-            <div class="logic-item"><span>Resulting Return:</span><span>${targetRet}%</span></div>
-        `;
-    }
-}
-
-function saveSettings() {
-    userSettings.target = parseFloat(document.getElementById('target-goal').value);
-    userSettings.years = parseFloat(document.getElementById('years-to-goal').value);
-    localStorage.setItem('userSettings', JSON.stringify(userSettings));
-    // No reload here to allow title editing to feel smooth
-}
-
-function saveData() {
-    localStorage.setItem('mySavings', JSON.stringify(mySavings));
-    localStorage.setItem('termSavings', JSON.stringify(termSavings));
-    localStorage.setItem('myStocks', JSON.stringify(myStocks));
-    localStorage.setItem('myDebts', JSON.stringify(myDebts));
-    location.reload();
-}
+function del(key, i) { db[key].splice(i, 1); save(); refreshDisplay(); }
+function save() { localStorage.setItem('liquid', JSON.stringify(db.liquid)); localStorage.setItem('fixed', JSON.stringify(db.fixed)); localStorage.setItem('stocks', JSON.stringify(db.stocks)); localStorage.setItem('debt', JSON.stringify(db.debt)); localStorage.setItem('settings', JSON.stringify(db.settings)); }
