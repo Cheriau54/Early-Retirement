@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wealth Tracker</title>
+    <title>Wealth Tracker Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,16 +11,16 @@
         <header>
             <h1>Wealth Tracker</h1>
             <div class="net-worth-box">
-                <small>Total Net Worth (EUR)</small>
+                <small>Current Total Net Worth</small>
                 <div id="total-net-worth">€0.00</div>
             </div>
         </header>
 
         <div class="input-grid">
             <div class="card">
-                <h3>Cash & Assets</h3>
+                <h3>Assets & Liabilities</h3>
                 <form id="bank-form">
-                    <label>Bank or Asset Name (e.g. MPF, HSBC)</label>
+                    <label>Bank or Asset (e.g. MPF, Savings)</label>
                     <div class="form-row">
                         <input type="text" id="bank-name" placeholder="Name" required>
                         <input type="number" id="bank-amount" placeholder="Amount" step="0.01" required>
@@ -30,33 +30,31 @@
                             <option value="HKD">HKD</option>
                         </select>
                     </div>
-                    <button type="submit">Add Asset</button>
+                    <button type="submit">Update Asset</button>
                 </form>
                 <hr>
-                <h3>Liabilities</h3>
                 <form id="debt-form">
-                    <label>Debt Name (HKD)</label>
+                    <label>Debt or Liability (HKD)</label>
                     <div class="form-row">
                         <input type="text" id="card-name" placeholder="Name" required>
                         <input type="number" id="card-amount" placeholder="Amount" step="0.01" required>
                     </div>
-                    <button type="submit" class="secondary-btn">Add Debt</button>
+                    <button type="submit" class="secondary-btn">Update Debt</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>Stock Portfolio</h3>
+                <h3>Stocks & Income</h3>
                 <form id="stock-form">
-                    <label>Stock Ticker (Auto-Average)</label>
+                    <label>Stock Holding (Auto-Average Price)</label>
                     <div class="form-row">
                         <input type="text" id="stock-ticker" placeholder="Ticker" required>
                         <input type="number" id="stock-shares" placeholder="Shares" step="0.01" required>
-                        <input type="number" id="stock-buy-price" placeholder="Buy Price ($)" step="0.01" required>
+                        <input type="number" id="stock-buy-price" placeholder="Avg Buy Price ($)" step="0.01" required>
                     </div>
                     <button type="submit">Log Stock</button>
                 </form>
                 <hr>
-                <h3>Income</h3>
                 <div class="input-group">
                     <label>Monthly Net Salary (EUR)</label>
                     <div class="form-row">
@@ -69,9 +67,9 @@
 
         <div class="dashboard-grid">
             <div class="card">
-                <h3>Asset & Liability List</h3>
+                <h3>Asset & Liability Summary</h3>
                 <div id="savings-list"></div>
-                <button id="reset-btn" class="danger-btn">Clear All Data</button>
+                <button id="reset-btn" class="danger-btn">Wipe All Data</button>
             </div>
             <div class="card">
                 <h3>Stock Portfolio</h3>
@@ -91,13 +89,20 @@
         </div>
 
         <section class="card goal-card">
-            <h3>Retirement Planner</h3>
+            <h3>Retirement Strategy & Deduction Logic</h3>
             <div class="planner-inputs">
                 <div class="input-group"><label>Target Goal (€)</label><input type="number" id="target-goal"></div>
-                <div class="input-group"><label>Years</label><input type="number" id="years-to-goal"></div>
-                <div class="input-group"><label>Return %</label><input type="number" id="annual-return"></div>
+                <div class="input-group"><label>Years Left</label><input type="number" id="years-to-goal"></div>
+                <div class="input-group"><label>Expected Return %</label><input type="number" id="annual-return"></div>
             </div>
-            <button id="save-settings-btn" class="save-btn">Update Financial Plan</button>
+            <button id="save-settings-btn" class="save-btn">Recalculate Goal</button>
+            
+            <div id="logic-breakdown" class="logic-list"></div>
+
+            <div class="progress-info">
+                <span>Goal Progress</span>
+                <span id="progress-percent">0%</span>
+            </div>
             <div class="progress-container"><div id="goal-progress-bar"></div></div>
             <div id="calculator-result"></div>
         </section>
