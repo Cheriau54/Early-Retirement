@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wealth Tracker Pro</title>
+    <title>Wealth Tracker</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -30,7 +30,7 @@
                             <option value="HKD">HKD</option>
                         </select>
                     </div>
-                    <button type="submit">Update Balance</button>
+                    <button type="submit">Update Cash</button>
                 </form>
                 <hr>
                 <form id="debt-form">
@@ -50,7 +50,7 @@
                     <div class="form-row">
                         <input type="text" id="stock-ticker" placeholder="Ticker" required>
                         <input type="number" id="stock-shares" placeholder="Shares" step="0.01" required>
-                        <input type="number" id="stock-buy-price" placeholder="Avg Buy Price ($)" step="0.01" required>
+                        <input type="number" id="stock-buy-price" placeholder="Buy Price ($)" step="0.01" required>
                     </div>
                     <button type="submit">Update Portfolio</button>
                 </form>
@@ -90,8 +90,7 @@
                 <div class="input-group"><label>Years to Reach</label><input type="number" id="years-to-goal"></div>
                 <div class="input-group"><label>Expected Return (%)</label><input type="number" id="annual-return"></div>
             </div>
-            <button id="save-settings-btn" class="save-btn">Update Financial Plan</button>
-            
+            <button id="save-settings-btn" class="save-btn">Save Plan & Refresh Data</button>
             <div class="progress-container"><div id="goal-progress-bar"></div></div>
             <div id="calculator-result"></div>
         </section>
