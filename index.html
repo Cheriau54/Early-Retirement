@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wealth Tracker Pro - Advanced Auditor</title>
+    <title>Wealth Tracker Pro - Financial Auditor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,98 +22,73 @@
         </header>
 
         <div class="asset-grid">
-            <section class="card" id="sec-liquid">
-                <div class="card-header">
-                    <h3>1. Liquid Assets</h3>
-                    <div id="acc-liq" class="section-accum">0 HKD</div>
-                </div>
-                <form id="form-liquid">
-                    <div class="input-row">
-                        <input type="text" id="liq-name" placeholder="Bank" required>
-                        <input type="number" id="liq-amount" placeholder="Amount" step="0.01" required>
-                        <select id="liq-curr" class="curr-list"></select>
-                        <button type="submit">Add</button>
-                    </div>
+            <section class="card">
+                <div class="card-header"><h3>1. Liquid Assets</h3><div id="acc-liq" class="sec-accum"></div></div>
+                <form id="form-liquid" class="entry-form">
+                    <input type="text" id="liq-name" placeholder="Bank" required>
+                    <input type="number" id="liq-amount" placeholder="Amount" step="0.01" required>
+                    <select id="liq-curr" class="curr-list"></select>
+                    <button type="submit">Add</button>
                 </form>
-                <div class="scroll-area">
-                    <table id="table-liquid"><thead><tr><th>Name</th><th>Amt</th><th>Value</th><th>Del</th></tr></thead><tbody></tbody></table>
-                </div>
+                <div class="scroll-area"><table id="table-liquid"><thead><tr><th>Bank</th><th>Amount</th><th>Value</th><th>Del</th></tr></thead><tbody></tbody></table></div>
             </section>
 
-            <section class="card" id="sec-fixed">
-                <div class="card-header">
-                    <h3>2. Fixed Savings</h3>
-                    <div id="acc-fix" class="section-accum surplus">0 HKD</div>
-                </div>
-                <form id="form-fixed">
-                    <div class="input-row">
-                        <input type="text" id="fix-name" placeholder="Bank" required>
-                        <input type="number" id="fix-amount" placeholder="Principal" step="0.01" required>
-                        <select id="fix-curr" class="curr-list"></select>
-                    </div>
-                    <div class="input-row">
-                        <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
-                        <input type="number" id="fix-duration" placeholder="Months" required>
-                        <input type="date" id="fix-start" required>
-                        <button type="submit">Add</button>
-                    </div>
+            <section class="card">
+                <div class="card-header"><h3>2. Fixed Savings</h3><div id="acc-fix" class="sec-accum surplus"></div></div>
+                <form id="form-fixed" class="entry-form">
+                    <div class="input-row"><input type="text" id="fix-name" placeholder="Bank" required><input type="number" id="fix-amount" placeholder="Principal" step="0.01" required><select id="fix-curr" class="curr-list"></select></div>
+                    <div class="input-row"><input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required><input type="number" id="fix-duration" placeholder="Months" required><input type="date" id="fix-start" required><button type="submit">Add</button></div>
                 </form>
-                <div class="scroll-area">
-                    <table id="table-fixed"><thead><tr><th>Bank</th><th>Rate</th><th>Interest</th><th>Total</th><th>Del</th></tr></thead><tbody></tbody></table>
-                </div>
+                <div class="scroll-area"><table id="table-fixed"><thead><tr><th>Bank</th><th>Rate</th><th>Ends</th><th>Interest</th><th>Total</th><th>Del</th></tr></thead><tbody></tbody></table></div>
             </section>
 
-            <section class="card" id="sec-stocks">
-                <div class="card-header">
-                    <h3>3. Equities (USD)</h3>
-                    <div id="acc-stk" class="section-accum">0 HKD</div>
-                </div>
-                <form id="form-stocks">
-                    <div class="input-row">
-                        <input type="text" id="stk-ticker" placeholder="Ticker" required>
-                        <input type="number" id="stk-qty" placeholder="Qty" step="0.01" required>
-                        <input type="number" id="stk-buy" placeholder="Avg Buy $" step="0.01" required>
-                        <button type="submit">Add</button>
-                    </div>
+            <section class="card">
+                <div class="card-header"><h3>3. Equities (USD)</h3><div id="acc-stk" class="sec-accum"></div></div>
+                <form id="form-stocks" class="entry-form">
+                    <input type="text" id="stk-ticker" placeholder="Ticker" required>
+                    <input type="number" id="stk-qty" placeholder="Qty" step="0.01" required>
+                    <input type="number" id="stk-buy" placeholder="Avg Buy $" step="0.01" required>
+                    <button type="submit">Add</button>
                 </form>
-                <div class="scroll-area">
-                    <table id="table-stocks"><thead><tr><th>Ticker</th><th>Qty</th><th>P/L</th><th>Total</th><th>Del</th></tr></thead><tbody></tbody></table>
-                </div>
+                <div class="scroll-area"><table id="table-stocks"><thead><tr><th>Ticker</th><th>Qty</th><th>Avg $</th><th>Live $</th><th>P/L</th><th>Del</th></tr></thead><tbody></tbody></table></div>
             </section>
 
-            <section class="card" id="sec-debt">
-                <div class="card-header">
-                    <h3>4. Liabilities</h3>
-                    <div id="acc-debt" class="section-accum loss">0 HKD</div>
-                </div>
-                <form id="form-debt">
-                    <div class="input-row">
-                        <input type="text" id="debt-name" placeholder="Name" required>
-                        <input type="number" id="debt-amount" placeholder="Owed" step="0.01" required>
-                        <select id="debt-curr" class="curr-list"></select>
-                        <button type="submit">Add</button>
-                    </div>
+            <section class="card">
+                <div class="card-header"><h3>4. Liabilities</h3><div id="acc-debt" class="sec-accum loss"></div></div>
+                <form id="form-debt" class="entry-form">
+                    <input type="text" id="debt-name" placeholder="Name" required>
+                    <input type="number" id="debt-amount" placeholder="Owed" step="0.01" required>
+                    <select id="debt-curr" class="curr-list"></select>
+                    <button type="submit">Add</button>
                 </form>
-                <div class="scroll-area">
-                    <table id="table-debt"><thead><tr><th>Name</th><th>Owed</th><th>Master</th><th>Del</th></tr></thead><tbody></tbody></table>
-                </div>
+                <div class="scroll-area"><table id="table-debt"><thead><tr><th>Name</th><th>Owed</th><th>Master</th><th>Del</th></tr></thead><tbody></tbody></table></div>
             </section>
         </div>
 
         <div class="strategy-row">
             <section class="card planner-card">
-                <h3>Retirement Planning Logic</h3>
+                <h3>Realistic Retirement Logic (Inflation Adjusted)</h3>
                 <div class="planner-inputs">
-                    <div class="p-field">Goal (<span class="m-curr">HKD</span>): <input type="number" id="target-goal"></div>
-                    <div class="p-field">Years Left: <input type="number" id="years-to-goal"></div>
-                    <div class="p-field">Income: <input type="number" id="monthly-income"> <select id="income-curr" class="curr-list"></select></div>
-                    <button id="calc-btn">Run Analysis</button>
+                    <div class="p-field">Goal (<span class="m-curr"></span>): <input type="number" id="target-goal"></div>
+                    <div class="p-field">Years: <input type="number" id="years-to-goal"></div>
+                    <div class="p-field">Expected Inflation %: <input type="number" id="inflation-rate" value="2.5" step="0.1"></div>
+                    <div class="p-field">Stock Growth %: <input type="number" id="stock-growth" value="7.0" step="0.1"></div>
+                    <div class="p-field">Monthly Income: <input type="number" id="monthly-income"> <select id="income-curr" class="curr-list"></select></div>
+                    <button id="calc-btn" class="primary-btn">Update Audit</button>
                 </div>
                 <div id="logic-output" class="logic-box"></div>
                 <div class="progress-container"><div id="progress-bar"></div><span id="progress-text">0%</span></div>
             </section>
+
+            <section class="card chart-card">
+                <div class="card-header"><h3>Asset Allocation</h3></div>
+                <div class="chart-flex">
+                    <div id="allocation-pie" class="pie-chart"></div>
+                    <div id="chart-legend" class="legend"></div>
+                </div>
+            </section>
         </div>
-        <button id="reset-btn" class="danger-btn">Wipe All Records</button>
+        <button id="reset-btn" class="danger-btn">Reset All Data</button>
     </div>
     <script src="script.js"></script>
 </body>
