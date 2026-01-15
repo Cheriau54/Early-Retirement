@@ -1,252 +1,48 @@
-/* --- GLOBAL STYLES --- */
-body {
-  background-color: #0f172a;        /* The deep navy background */
-  color: #f8fafc;                   /* The main white text color */
-  font-family: sans-serif;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  padding-left: 20px;
-  padding-right: 20px;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  margin-left: 0px;
-  margin-right: 0px;
+:root {
+  --bg: #0f172a; --card: #1e293b; --text: #f8fafc;
+  --accent: #38bdf8; --success: #4ade80; --danger: #fb7185;
 }
 
-#dashboard {
-  max-width: 1000px;
-  margin-left: auto;                /* Centers the dashboard on the screen */
-  margin-right: auto;
-}
+body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; margin: 0; }
+#dashboard { max-width: 1100px; margin: 0 auto; }
 
-/* --- CARDS (The boxes holding your data) --- */
-.card {
-  background-color: #1e293b;        /* Lighter grey-blue for the cards */
-  padding-top: 20px;
-  padding-bottom: 20px;
-  padding-left: 20px;
-  padding-right: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-}
+.card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+h3 { color: var(--accent); margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
 
-h3 {
-  color: #38bdf8;                   /* Sky blue headers */
-  margin-top: 0px;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: #334155;
-  padding-bottom: 10px;
-}
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.input-grid, .planner-inputs, .dashboard-grid { display: grid; gap: 20px; }
+.input-grid { grid-template-columns: 1fr 1fr; }
+.planner-inputs { grid-template-columns: 1fr 1fr 1fr; }
+.dashboard-grid { grid-template-columns: 1fr 1.5fr; }
 
-/* --- INPUTS AND FORMS --- */
-.form-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
+input, select { padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; width: 100%; box-sizing: border-box; }
+label { font-size: 0.75rem; color: #94a3b8; display: block; margin-top: 10px; text-transform: uppercase; }
 
-.input-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;   /* Creates two equal columns */
-  gap: 20px;
-}
+button { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+button { background: var(--accent); color: var(--bg); }
+.secondary-btn { background: #475569; color: white; }
+.save-btn { background: #6366f1; color: white; }
+.danger-btn { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
 
-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  display: block;
-  margin-top: 10px;
-  text-transform: uppercase;
-}
+/* Modal Styling */
+.modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; }
+.modal-content { width: 90%; max-width: 400px; }
 
-input, select {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 10px;
-  padding-right: 10px;
-  border-radius: 6px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #334155;
-  background-color: #0f172a;
-  color: white;
-  width: 100%;
-  box-sizing: border-box;           /* Ensures padding doesn't make inputs wider than the card */
-}
+.net-worth-box { text-align: right; }
+#total-net-worth { font-size: 2rem; color: var(--success); font-weight: bold; }
 
-/* --- BUTTONS --- */
-button {
-  padding-top: 12px;
-  padding-bottom: 12px;
-  border-radius: 6px;
-  border-style: none;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
-  width: 100%;
-  background-color: #38bdf8;        /* Main blue buttons */
-  color: #0f172a;
-}
+.progress-container { background: #334155; height: 12px; border-radius: 10px; margin: 20px 0; }
+#goal-progress-bar { background: var(--success); height: 100%; width: 0%; border-radius: 10px; transition: 1s ease; }
 
-.secondary-btn {
-  background-color: #475569;        /* Grey buttons for debt */
-  color: white;
-}
+.account-row, .debt-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; }
+.debt-row { color: var(--danger); }
 
-.save-btn {
-  background-color: #6366f1;        /* Purple button for goal saving */
-  color: white;
-  margin-top: 20px;
-}
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 0.7rem; color: #94a3b8; padding-bottom: 10px; text-transform: uppercase; }
+td { padding: 12px 5px; border-bottom: 1px solid #334155; font-size: 0.9rem; }
 
-.danger-btn {
-  background-color: transparent;
-  color: #fb7185;                   /* Red border button for Reset */
-  border-width: 1px;
-  border-style: solid;
-  border-color: #fb7185;
-}
+.action-btn { width: auto; padding: 4px 8px; font-size: 11px; margin-top: 0; margin-left: 5px; }
+.edit-btn { background: #facc15; color: black; }
+.del-btn { background: var(--danger); color: white; }
 
-/* --- NET WORTH HEADER --- */
-.net-worth-box {
-  text-align: right;
-}
-
-#total-net-worth {
-  font-size: 2rem;
-  color: #4ade80;                   /* Green for your total money */
-  font-weight: bold;
-}
-
-/* --- GOAL PROGRESS BAR --- */
-.progress-container {
-  background-color: #334155;
-  height: 12px;
-  border-radius: 10px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-#goal-progress-bar {
-  background-color: #4ade80;
-  height: 100%;
-  width: 0%;
-  border-radius: 10px;
-  transition-property: width;       /* Makes the bar "slide" when it updates */
-  transition-duration: 1s;
-  transition-timing-function: ease;
-}
-
-/* --- DATA ROWS (Savings & Debt) --- */
-.account-row {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: #334155;
-}
-
-.debt-row {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: #334155;
-  color: #fb7185;                   /* Debt shows up in red */
-}
-
-/* --- STATUS MESSAGES --- */
-.status-msg {
-  padding-top: 15px;
-  padding-bottom: 15px;
-  padding-left: 15px;
-  padding-right: 15px;
-  border-radius: 8px;
-  margin-top: 10px;
-  font-weight: bold;
-}
-
-.status-good {
-  background-color: rgba(74, 222, 128, 0.1); /* Transparent green */
-  color: #4ade80;
-}
-
-.status-bad {
-  background-color: rgba(251, 113, 133, 0.1); /* Transparent red */
-  color: #fb7185;
-}
-
-/* --- STOCK TABLE --- */
-table {
-  width: 100%;
-  border-collapse: collapse;        /* Removes space between table borders */
-}
-
-th {
-  text-align: left;
-  font-size: 0.75rem;
-  color: #94a3b8;
-  padding-bottom: 10px;
-}
-
-td {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: #334155;
-}
-
-hr {
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-top-color: #334155;
-  border-bottom-width: 0px;
-  border-left-width: 0px;
-  border-right-width: 0px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0; width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.8);
-}
-
-.modal-content {
-    margin: 10% auto;
-    width: 90%;
-    max-width: 400px;
-}
-
-.action-btn {
-    width: auto;
-    padding: 5px 10px;
-    margin-left: 5px;
-    font-size: 10px;
-    display: inline-block;
-}
-
-.edit-btn { background-color: #fbbf24; color: #000; }
-.del-btn { background-color: #fb7185; color: #fff; }
-
-.account-row, .debt-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #334155;
-}
-
-/* Ensure table buttons don't break layout */
-td .action-btn { margin-top: 0; }
+@media (max-width: 768px) { .input-grid, .dashboard-grid, .planner-inputs { grid-template-columns: 1fr; } }
