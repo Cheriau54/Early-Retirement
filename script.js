@@ -1,4 +1,4 @@
-const FX_API_KEY = '393a43661559351810312743';
+const FX_API_KEY = process.env.API_KEY || '393a43661559351810312743';
 const GOAL_AMOUNT = 500000;
 
 // Load data from browser storage or start empty
