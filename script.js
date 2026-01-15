@@ -1,75 +1,115 @@
-const FX_API_KEY = process.env.API_KEY || '393a43661559351810312743';
-const GOAL_AMOUNT = 500000;
+const FX_API_KEY = '393a43661559351810312743';
 
-// Load data from browser storage or start empty
+// LOAD DATA
 let mySavings = JSON.parse(localStorage.getItem('mySavings')) || [];
 let myStocks = JSON.parse(localStorage.getItem('myStocks')) || [];
+let userSettings = JSON.parse(localStorage.getItem('userSettings')) || { 
+    target: 500000, 
+    years: 10, 
+    return: 7, 
+    salary: 3000 
+};
 
-// Handle Bank Form Submission
-document.getElementById('bank-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  mySavings.push({
-    name: document.getElementById('bank-name').value,
-    amount: parseFloat(document.getElementById('bank-amount').value),
-    currency: document.getElementById('bank-currency').value
-  });
-  saveAndRefresh();
-});
+// INITIALIZE INPUTS
+document.getElementById('target-goal').value = userSettings.target;
+document.getElementById('years-to-goal').value = userSettings.years;
+document.getElementById('annual-return').value = userSettings.return;
+document.getElementById('monthly-salary').value = userSettings.salary;
 
-// Handle Stock Form Submission
-document.getElementById('stock-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  myStocks.push({
-    symbol: document.getElementById('stock-ticker').value.toUpperCase(),
-    shares: parseFloat(document.getElementById('stock-shares').value),
-    avgPrice: parseFloat(document.getElementById('stock-buy-price').value)
-  });
-  saveAndRefresh();
-});
-
-function saveAndRefresh() {
-  localStorage.setItem('mySavings', JSON.stringify(mySavings));
-  localStorage.setItem('myStocks', JSON.stringify(myStocks));
-  location.reload(); // Refresh to update all math
-}
-
-function clearData() {
-  if(confirm("Delete all data?")) {
-    localStorage.clear();
+// SAVE SETTINGS
+document.getElementById('save-settings-btn').addEventListener('click', () => {
+    userSettings = {
+        target: parseFloat(document.getElementById('target-goal').value),
+        years: parseFloat(document.getElementById('years-to-goal').value),
+        return: parseFloat(document.getElementById('annual-return').value),
+        salary: parseFloat(document.getElementById('monthly-salary').value)
+    };
+    localStorage.setItem('userSettings', JSON.stringify(userSettings));
     location.reload();
-  }
+});
+
+// FORM HANDLERS (Same as before)
+document.getElementById('bank-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    mySavings.push({
+        name: document.getElementById('bank-name').value,
+        amount: parseFloat(document.getElementById('bank-amount').value),
+        currency: document.getElementById('bank-currency').value
+    });
+    localStorage.setItem('mySavings', JSON.stringify(mySavings));
+    location.reload();
+});
+
+document.getElementById('stock-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    myStocks.push({
+        symbol: document.getElementById('stock-ticker').value.toUpperCase(),
+        shares: parseFloat(document.getElementById('stock-shares').value),
+        avgPrice: parseFloat(document.getElementById('stock-buy-price').value)
+    });
+    localStorage.setItem('myStocks', JSON.stringify(myStocks));
+    location.reload();
+});
+
+function clearAllData() {
+    if(confirm("Permanently delete your private records?")) {
+        localStorage.clear();
+        location.reload();
+    }
 }
 
-async function initDashboard() {
-  const response = await fetch(`https://v6.exchangerate-api.com/v6/${FX_API_KEY}/latest/EUR`);
-  const data = await response.json();
-  const rates = data.conversion_rates;
-  let totalNetWorthEur = 0;
+async function init() {
+    const res = await fetch(`https://v6.exchangerate-api.com/v6/${FX_API_KEY}/latest/EUR`);
+    const data = await res.json();
+    const rates = data.conversion_rates;
+    let totalEur = 0;
 
-  // Render Savings
-  const savingsContainer = document.getElementById('savings-list');
-  mySavings.forEach(acc => {
-    const rateToEur = 1 / rates[acc.currency];
-    const eurVal = acc.amount * rateToEur;
-    totalNetWorthEur += eurVal;
-    savingsContainer.innerHTML += `<div class="account-row"><span>${acc.name}</span><strong>${acc.amount.toLocaleString()} ${acc.currency}</strong></div>`;
-  });
+    // Accounts
+    const list = document.getElementById('savings-list');
+    mySavings.forEach(acc => {
+        const val = acc.amount / rates[acc.currency];
+        totalEur += val;
+        list.innerHTML += `<div class="account-row"><span>${acc.name}</span><strong>${acc.amount} ${acc.currency}</strong></div>`;
+    });
 
-  // Render Stocks (Demo Price: $240)
-  const stockBody = document.getElementById('stock-body');
-  myStocks.forEach(stock => {
-    const livePriceUsd = 240; 
-    const currentValUsd = stock.shares * livePriceUsd;
-    const profitUsd = currentValUsd - (stock.shares * stock.avgPrice);
-    totalNetWorthEur += (currentValUsd / rates.USD);
+    // Stocks
+    const stockBody = document.getElementById('stock-body');
+    myStocks.forEach(s => {
+        const livePrice = 240; // Simulated
+        const currentValUsd = s.shares * livePrice;
+        const profit = currentValUsd - (s.shares * s.avgPrice);
+        totalEur += (currentValUsd / rates.USD);
+        stockBody.innerHTML += `<tr><td>${s.symbol}</td><td>$${currentValUsd.toFixed(0)}</td><td class="${profit >= 0 ? 'profit-pos' : 'profit-neg'}">$${profit.toFixed(0)}</td></tr>`;
+    });
 
-    stockBody.innerHTML += `<tr><td>${stock.symbol}</td><td>$${currentValUsd.toLocaleString()}</td><td class="${profitUsd >= 0 ? 'profit-pos' : 'profit-neg'}">$${profitUsd.toFixed(2)}</td></tr>`;
-  });
+    document.getElementById('total-net-worth').innerText = `€${totalEur.toLocaleString(undefined, {maximumFractionDigits:0})}`;
+    
+    // CALCULATOR LOGIC
+    const months = userSettings.years * 12;
+    const monthlyRate = (userSettings.return / 100) / 12;
+    const compound = Math.pow(1 + monthlyRate, months);
+    const remaining = userSettings.target - (totalEur * compound);
+    const monthlyNeeded = remaining > 0 ? remaining / ((compound - 1) / monthlyRate) : 0;
 
-  document.getElementById('total-net-worth').innerText = `€${totalNetWorthEur.toLocaleString()}`;
-  const progress = (totalNetWorthEur / GOAL_AMOUNT) * 100;
-  document.getElementById('goal-progress-bar').style.width = `${Math.min(progress, 100)}%`;
-  document.getElementById('goal-text').innerText = `${progress.toFixed(1)}% to your goal!`;
+    // Progress Bar
+    document.getElementById('goal-progress-bar').style.width = `${Math.min((totalEur/userSettings.target)*100, 100)}%`;
+
+    // Salary Comparison
+    const canAfford = userSettings.salary >= monthlyNeeded;
+    const statusClass = canAfford ? 'status-good' : 'status-bad';
+    const statusText = canAfford 
+        ? `✓ Your salary covers this (Surplus: €${(userSettings.salary - monthlyNeeded).toFixed(0)})` 
+        : `⚠ Your salary is €${(monthlyNeeded - userSettings.salary).toFixed(0)} short of this goal.`;
+
+    document.getElementById('calculator-result').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h2 style="color:var(--success); margin:0;">€${monthlyNeeded.toLocaleString(undefined, {maximumFractionDigits:0})} / month</h2>
+                <p style="margin:5px 0 0 0;">Savings required for €${userSettings.target.toLocaleString()}</p>
+            </div>
+            <div class="status-msg ${statusClass}">${statusText}</div>
+        </div>
+    `;
 }
 
-initDashboard();
+init();
