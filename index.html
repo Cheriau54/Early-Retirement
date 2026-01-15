@@ -1,40 +1,87 @@
-<div id="dashboard">
-  <header>
-    <h1>Wealth Tracker</h1>
-    <div class="net-worth-box">
-      <small>Total Net Worth (EUR)</small>
-      <div id="total-net-worth">€0.00</div>
-      <link rel="stylesheet" href="style.css">
-    </div>
-  </header>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Wealth Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="dashboard">
+        <header>
+            <h1>Wealth Tracker</h1>
+            <div class="net-worth-box">
+                <small>Total Net Worth (EUR)</small>
+                <div id="total-net-worth">€0.00</div>
+            </div>
+        </header>
 
-  <div class="input-grid">
-    <div class="card">
-      <h3>Add Bank Account</h3>
-      <form id="bank-form">
-        <input type="text" id="bank-name" placeholder="Bank Name" required>
-        <input type="number" id="bank-amount" placeholder="Amount" required>
-        <select id="bank-currency">
-          <option value="EUR">EUR</option>
-          <option value="USD">USD</option>
-          <option value="HKD">HKD</option>
-        </select>
-        <button type="submit">Add Account</button>
-      </form>
-    </div>
+        <div class="input-grid">
+            <div class="card">
+                <h3>Accounts & Stocks</h3>
+                <form id="bank-form">
+                    <input type="text" id="bank-name" placeholder="Bank Name" required>
+                    <input type="number" id="bank-amount" placeholder="Amount" required>
+                    <select id="bank-currency">
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                        <option value="HKD">HKD</option>
+                    </select>
+                    <button type="submit">Add Account</button>
+                </form>
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #334155;">
+                <form id="stock-form">
+                    <input type="text" id="stock-ticker" placeholder="Ticker (e.g. AAPL)" required>
+                    <input type="number" id="stock-shares" placeholder="Shares" required>
+                    <input type="number" id="stock-buy-price" placeholder="Avg Buy Price ($)" required>
+                    <button type="submit">Add Stock</button>
+                </form>
+            </div>
 
-    <div class="card">
-      <h3>Add US Stock</h3>
-      <form id="stock-form">
-        <input type="text" id="stock-ticker" placeholder="Ticker (e.g. AAPL)" required>
-        <input type="number" id="stock-shares" placeholder="Shares" required>
-        <input type="number" id="stock-buy-price" placeholder="Avg Buy Price ($)" required>
-        <button type="submit">Add Stock</button>
-      </form>
-    </div>
-  </div>
+            <div class="card">
+                <h3>Income & Goal Settings</h3>
+                <div class="input-group">
+                    <label>Monthly Net Salary (EUR)</label>
+                    <input type="number" id="monthly-salary" value="0">
+                </div>
+                <div class="input-group" style="margin-top:10px;">
+                    <label>Target Goal (€)</label>
+                    <input type="number" id="target-goal" value="500000">
+                </div>
+                <div class="input-grid-mini" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                    <div>
+                        <label>Years</label>
+                        <input type="number" id="years-to-goal" value="10">
+                    </div>
+                    <div>
+                        <label>Return %</label>
+                        <input type="number" id="annual-return" value="7">
+                    </div>
+                </div>
+                <button id="save-settings-btn" class="save-btn">Save All Settings</button>
+            </div>
+        </div>
 
-  <section class="card goal-card">
-    <h2>Savings Goal: €500,000</h2>
-    <div class="progress-container"><div id="goal-progress-bar"><script src="script.js"></script></div></div>
-    <p id="goal-text
+        <section class="card goal-card">
+            <div class="progress-container"><div id="goal-progress-bar"></div></div>
+            <div id="calculator-result"></div>
+        </section>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Asset Breakdown</h3>
+                <div id="savings-list"></div>
+                <button onclick="clearAllData()" class="danger-btn">Reset All Data</button>
+            </div>
+            <div class="card">
+                <h3>US Stock Portfolio</h3>
+                <table id="stock-table">
+                    <thead><tr><th>Ticker</th><th>Value (USD)</th><th>Profit</th></tr></thead>
+                    <tbody id="stock-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
