@@ -1,0 +1,39 @@
+<div id="dashboard">
+  <header>
+    <h1>Wealth Tracker</h1>
+    <div class="net-worth-box">
+      <small>Total Net Worth (EUR)</small>
+      <div id="total-net-worth">€0.00</div>
+    </div>
+  </header>
+
+  <div class="input-grid">
+    <div class="card">
+      <h3>Add Bank Account</h3>
+      <form id="bank-form">
+        <input type="text" id="bank-name" placeholder="Bank Name" required>
+        <input type="number" id="bank-amount" placeholder="Amount" required>
+        <select id="bank-currency">
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+          <option value="HKD">HKD</option>
+        </select>
+        <button type="submit">Add Account</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Add US Stock</h3>
+      <form id="stock-form">
+        <input type="text" id="stock-ticker" placeholder="Ticker (e.g. AAPL)" required>
+        <input type="number" id="stock-shares" placeholder="Shares" required>
+        <input type="number" id="stock-buy-price" placeholder="Avg Buy Price ($)" required>
+        <button type="submit">Add Stock</button>
+      </form>
+    </div>
+  </div>
+
+  <section class="card goal-card">
+    <h2>Savings Goal: €500,000</h2>
+    <div class="progress-container"><div id="goal-progress-bar"></div></div>
+    <p id="goal-text
