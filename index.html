@@ -18,11 +18,11 @@
 
         <div class="input-grid">
             <div class="card">
-                <h3>Cash & Debts</h3>
+                <h3>Cash & Assets</h3>
                 <form id="bank-form">
-                    <label>Log Bank Balance (Auto-Merge)</label>
+                    <label>Bank or Asset Name (e.g. MPF, HSBC)</label>
                     <div class="form-row">
-                        <input type="text" id="bank-name" placeholder="Bank Name" required>
+                        <input type="text" id="bank-name" placeholder="Name" required>
                         <input type="number" id="bank-amount" placeholder="Amount" step="0.01" required>
                         <select id="bank-currency">
                             <option value="EUR">EUR</option>
@@ -30,39 +30,46 @@
                             <option value="HKD">HKD</option>
                         </select>
                     </div>
-                    <button type="submit">Update Cash</button>
+                    <button type="submit">Add Asset</button>
                 </form>
                 <hr>
+                <h3>Liabilities</h3>
                 <form id="debt-form">
-                    <label>Log Credit Card Debt (HKD)</label>
+                    <label>Debt Name (HKD)</label>
                     <div class="form-row">
-                        <input type="text" id="card-name" placeholder="Card Name" required>
-                        <input type="number" id="card-amount" placeholder="Owed Amount" step="0.01" required>
+                        <input type="text" id="card-name" placeholder="Name" required>
+                        <input type="number" id="card-amount" placeholder="Amount" step="0.01" required>
                     </div>
-                    <button type="submit" class="secondary-btn">Update Debt</button>
+                    <button type="submit" class="secondary-btn">Add Debt</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>Stocks & Income</h3>
+                <h3>Stock Portfolio</h3>
                 <form id="stock-form">
-                    <label>Log Stock Holding (Auto-Average)</label>
+                    <label>Stock Ticker (Auto-Average)</label>
                     <div class="form-row">
                         <input type="text" id="stock-ticker" placeholder="Ticker" required>
                         <input type="number" id="stock-shares" placeholder="Shares" step="0.01" required>
                         <input type="number" id="stock-buy-price" placeholder="Buy Price ($)" step="0.01" required>
                     </div>
-                    <button type="submit">Update Portfolio</button>
+                    <button type="submit">Log Stock</button>
                 </form>
                 <hr>
-                <div class="input-group"><label>Monthly Salary (EUR)</label><input type="number" id="monthly-salary" step="0.01"></div>
-                <div class="input-group"><label>MPF Balance (HKD)</label><input type="number" id="mpf-amount" step="0.01"></div>
+                <h3>Income</h3>
+                <div class="input-group">
+                    <label>Monthly Net Salary (EUR)</label>
+                    <div class="form-row">
+                        <input type="number" id="monthly-salary" step="0.01" placeholder="0.00">
+                        <button id="save-salary-btn" style="width: 80px; margin-top: 0;">Save</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="dashboard-grid">
             <div class="card">
-                <h3>Asset List</h3>
+                <h3>Asset & Liability List</h3>
                 <div id="savings-list"></div>
                 <button id="reset-btn" class="danger-btn">Clear All Data</button>
             </div>
@@ -84,13 +91,13 @@
         </div>
 
         <section class="card goal-card">
-            <h3>Retirement & Goal Planner</h3>
+            <h3>Retirement Planner</h3>
             <div class="planner-inputs">
                 <div class="input-group"><label>Target Goal (€)</label><input type="number" id="target-goal"></div>
-                <div class="input-group"><label>Years to Reach</label><input type="number" id="years-to-goal"></div>
-                <div class="input-group"><label>Expected Return (%)</label><input type="number" id="annual-return"></div>
+                <div class="input-group"><label>Years</label><input type="number" id="years-to-goal"></div>
+                <div class="input-group"><label>Return %</label><input type="number" id="annual-return"></div>
             </div>
-            <button id="save-settings-btn" class="save-btn">Save Plan & Refresh Data</button>
+            <button id="save-settings-btn" class="save-btn">Update Financial Plan</button>
             <div class="progress-container"><div id="goal-progress-bar"></div></div>
             <div id="calculator-result"></div>
         </section>
