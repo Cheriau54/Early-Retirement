@@ -137,3 +137,15 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Sensitive keys
+.env
+config.js
+
+# Local Data (Never push your actual savings data)
+*.json
+!package.json
+
+# OS files
+.DS_Store
+Thumbs.db
