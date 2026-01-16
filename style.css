@@ -64,6 +64,12 @@ header {
     margin-top: 10px;
 }
 
+.control-grp {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .net-worth-card {
     text-align: right;
 }
@@ -137,6 +143,12 @@ header {
     font-weight: 700;
 }
 
+.pl-indicator {
+    font-size: 11px;
+    font-weight: 800;
+    margin-right: 5px;
+}
+
 /* --- SCROLLABLE DATA TABLES --- */
 .scroll-area {
     flex: 1;
@@ -170,10 +182,86 @@ td {
     padding: 12px 10px;
     border-bottom: 1px solid var(--border-ui);
     color: var(--text-main);
-    font-size: 13px;
+    font-size: 12px;
 }
 
-/* --- LOWER AUDIT PANEL (FULL DISPLAY) --- */
+/* --- INPUTS & BUTTONS --- */
+.entry-form {
+    margin-bottom: 5px;
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.input-grp {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.input-grp label {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+input, select {
+    background-color: var(--input-fill);
+    border: 1px solid var(--border-ui);
+    color: var(--text-main);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    width: 100%;
+    outline: none;
+}
+
+input:focus {
+    border-color: var(--accent-primary);
+}
+
+button {
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.primary-btn {
+    background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+}
+
+.primary-btn-sm {
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 6px;
+    font-size: 11px;
+}
+
+.danger-btn {
+    background: transparent;
+    color: var(--danger-glow);
+    border: 1px solid var(--danger-glow);
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 11px;
+}
+
+.danger-btn:hover {
+    background: var(--danger-glow);
+    color: white;
+}
+
+/* --- AUDIT PANEL (LOWER SECTION) --- */
 .strategy-row {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
@@ -182,22 +270,22 @@ td {
 }
 
 .audit-full-card {
-    height: auto !important; /* Full expansion for the audit logic */
-    min-height: 350px;
+    height: auto !important;
+    min-height: 450px;
 }
 
 .logic-box-full {
     background-color: var(--input-fill);
     border: 1px solid var(--border-ui);
     border-radius: 10px;
-    padding: 20px;
+    padding: 15px;
     margin-top: 15px;
 }
 
 .audit-line {
     display: flex;
     justify-content: space-between;
-    padding: 12px 0;
+    padding: 10px 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
@@ -209,6 +297,105 @@ td {
     font-weight: 700;
 }
 
+/* --- PROGRESS BAR & LABELS --- */
+.progress-container {
+    height: 24px;
+    background: var(--input-fill);
+    border-radius: 12px;
+    margin-top: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border-ui);
+    position: relative;
+}
+
+#progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, var(--accent-primary), var(--success-glow));
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 0;
+    line-height: 24px;
+    font-size: 11px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.p-label span {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.p-label b {
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+/* --- PIE CHART & LEGEND --- */
+.chart-flex {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-top: 10px;
+}
+
+.pie-chart {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-depth);
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+}
+
+.legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.2);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.legend-item .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.legend-item span {
+    font-size: 12px;
+}
+
+.legend-item .pct {
+    font-weight: 800;
+    color: var(--accent-primary);
+    margin-left: auto;
+}
+
 /* --- MODAL POP-UP WINDOW --- */
 .modal-overlay {
     position: fixed;
@@ -218,7 +405,7 @@ td {
     height: 100%;
     background: var(--modal-overlay);
     backdrop-filter: blur(5px);
-    display: none; /* Controlled by JS */
+    display: none; 
     align-items: center;
     justify-content: center;
     z-index: 9999;
@@ -254,67 +441,12 @@ td {
     justify-content: flex-end;
 }
 
-/* --- INPUTS & BUTTONS --- */
-input, select {
-    background-color: var(--input-fill);
-    border: 1px solid var(--border-ui);
-    color: var(--text-main);
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 13px;
-    width: 100%;
-}
-
-.primary-btn {
-    background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    width: 100%;
-}
-
-.save-btn {
-    background: var(--success-glow);
-    color: var(--bg-depth);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.btn-edit {
-    background: rgba(129, 140, 248, 0.15);
-    color: var(--accent-primary);
-    border: 1px solid var(--accent-primary);
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-right: 5px;
-}
-
-.btn-del {
-    background: rgba(248, 113, 113, 0.15);
-    color: var(--danger-glow);
-    border: 1px solid var(--danger-glow);
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    cursor: pointer;
-}
-
 .btn-cancel {
     background: transparent;
     color: var(--text-muted);
     border: 1px solid var(--border-ui);
     padding: 10px 20px;
     border-radius: 6px;
-    cursor: pointer;
 }
 
 .btn-save-modal {
@@ -324,33 +456,31 @@ input, select {
     padding: 10px 20px;
     border-radius: 6px;
     font-weight: 700;
-    cursor: pointer;
 }
 
-/* --- VISUAL ELEMENTS --- */
-.progress-container {
-    height: 12px;
-    background: var(--input-fill);
-    border-radius: 10px;
-    margin-top: 20px;
-    overflow: hidden;
-    border: 1px solid var(--border-ui);
+.btn-edit, .btn-del {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    border: 1px solid;
+    background: transparent;
 }
 
-#progress-bar {
-    height: 100%;
-    background: linear-gradient(to right, var(--accent-primary), var(--success-glow));
-    transition: width 0.5s ease-in-out;
-}
-
-.pie-chart {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    margin: 20px auto;
-}
+.btn-edit { color: var(--accent-primary); border-color: var(--accent-primary); margin-right: 5px; }
+.btn-del { color: var(--danger-glow); border-color: var(--danger-glow); }
 
 /* --- STATUS COLORS --- */
 .surplus { color: var(--success-glow) !important; }
 .loss { color: var(--danger-glow) !important; }
 
+/* Custom scrollbar for scroll-area */
+.scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.scroll-area::-webkit-scrollbar-track {
+    background: var(--input-fill);
+}
+.scroll-area::-webkit-scrollbar-thumb {
+    background: var(--border-ui);
+    border-radius: 10px;
+}
