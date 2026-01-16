@@ -1,41 +1,343 @@
+/* RESET & THEME VARIABLES */
 :root {
-    --bg: #0b1120; --card: #1e293b; --text: #e2e8f0; --accent: #6366f1;
-    --success: #22c55e; --danger: #ef4444; --border: #334155;
+    --bg: #0b1120; 
+    --card: #1e293b; 
+    --text: #e2e8f0; 
+    --accent: #6366f1;
+    --success: #22c55e; 
+    --danger: #ef4444; 
+    --border: #334155;
+    --input-bg: #0f172a;
 }
-body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 20px; font-size: 11px; margin: 0; }
-#dashboard { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-.header-controls { display: flex; gap: 10px; align-items: center; }
-#total-net-worth { font-size: 2.4rem; color: var(--success); font-weight: 800; }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.sec-accum { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
-.asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.card { background: var(--card); border-radius: 12px; padding: 18px; height: 350px; display: flex; flex-direction: column; border: 1px solid var(--border); box-sizing: border-box; }
-.scroll-area { flex: 1; overflow-y: auto; margin-top: 12px; border: 1px solid var(--border); background: #0f172a; border-radius: 6px; }
-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-th { position: sticky; top: 0; background: #1e293b; padding: 10px 4px; text-align: left; color: #94a3b8; font-weight: 600; z-index: 5; border-bottom: 1px solid var(--border); }
-td { padding: 10px 4px; border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+* {
+    box-sizing: border-box;
+}
+
+body { 
+    background: var(--bg); 
+    color: var(--text); 
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+    padding: 20px; 
+    font-size: 11px; 
+    margin: 0; 
+    line-height: 1.4;
+}
+
+/* LAYOUT STRUCTURE */
+#dashboard { 
+    max-width: 1400px; 
+    margin: 0 auto; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+}
+
+/* HEADER SECTION */
+header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 1px solid var(--border); 
+    padding-bottom: 15px; 
+}
+
+.header-main h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    outline: none;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 5px;
+}
+
+.master-pivot label {
+    margin-right: 8px;
+    color: #94a3b8;
+}
+
+#total-net-worth { 
+    font-size: 2.4rem; 
+    color: var(--success); 
+    font-weight: 800; 
+    text-align: right;
+}
+
+/* ASSET CARDS GRID */
+.asset-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px; 
+}
+
+/* UNIVERSAL CARD STYLING */
+.card { 
+    background: var(--card); 
+    border-radius: 12px; 
+    padding: 18px; 
+    height: 350px; /* STRICT HEIGHT REQUIREMENT */
+    display: flex; 
+    flex-direction: column; 
+    border: 1px solid var(--border); 
+    position: relative;
+    overflow: hidden; 
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.card h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.sec-accum { 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    color: var(--accent); 
+}
+
+/* SCROLLING TABLE AREA */
+.scroll-area { 
+    flex: 1; 
+    overflow-y: auto; /* ENABLES SCROLLING INSIDE CARD */
+    margin-top: 12px; 
+    border: 1px solid var(--border); 
+    background: var(--input-bg); 
+    border-radius: 6px; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    table-layout: fixed; 
+}
+
+th { 
+    position: sticky; 
+    top: 0; 
+    background: #1e293b; 
+    padding: 10px 4px; 
+    text-align: left; 
+    color: #94a3b8; 
+    font-weight: 600; 
+    z-index: 5; 
+    border-bottom: 1px solid var(--border); 
+}
+
+td { 
+    padding: 10px 4px; 
+    border-bottom: 1px solid var(--border); 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+
+/* FORM STYLING */
+.input-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+input, select { 
+    background: var(--input-bg); 
+    border: 1px solid var(--border); 
+    color: white; 
+    padding: 6px; 
+    border-radius: 6px; 
+    width: 100%; 
+    font-size: 11px; 
+}
+
+.date-input-grp { 
+    display: flex; 
+    flex-direction: column; 
+    min-width: 110px; 
+}
+
+.date-input-grp label { 
+    font-size: 9px; 
+    color: #94a3b8; 
+    margin-bottom: 2px;
+}
+
+/* STRATEGY ROW & FINANCIAL AUDIT */
+.strategy-row { 
+    display: grid; 
+    grid-template-columns: 1.6fr 1fr; 
+    gap: 20px; 
+}
+
+.planner-inputs { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 10px; 
+    margin-bottom: 10px; 
+}
+
+.toggle-row {
+    display: flex;
+    gap: 3px;
+    margin-top: 3px;
+}
+
+/* LOGICAL DEDUCTION BOX FIX */
+.logic-box { 
+    background: var(--input-bg); 
+    padding: 12px; 
+    border-radius: 8px; 
+    border: 1px solid var(--border); 
+    flex: 1; 
+    overflow-y: auto; /* ENSURES AUDIT TEXT DOESN'T FALL OUT */
+    display: flex; 
+    flex-direction: column; 
+    gap: 6px; 
+}
+
+.audit-line { 
+    display: flex; 
+    justify-content: space-between; 
+    border-bottom: 1px dashed #334155; 
+    padding: 6px 0; 
+    font-family: 'Inter', sans-serif; 
+}
+
+/* PROGRESS BAR */
+.progress-container { 
+    background: var(--border); 
+    height: 20px; 
+    border-radius: 10px; 
+    position: relative; 
+    margin-top: 15px; 
+    overflow: hidden; 
+}
+
+#progress-bar { 
+    background: var(--success); 
+    height: 100%; 
+    width: 0%; 
+    transition: 1s ease-in-out; 
+}
+
+#progress-text { 
+    position: absolute; 
+    width: 100%; 
+    text-align: center; 
+    top: 0; 
+    line-height: 20px; 
+    font-weight: bold; 
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* ASSET ALLOCATION PIE */
+.chart-flex { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-around; 
+    padding: 15px 0;
+}
+
+.pie-chart { 
+    width: 130px; 
+    height: 130px; 
+    border-radius: 50%; 
+    border: 2px solid var(--border); 
+}
+
+.legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-weight: 600;
+}
+
+/* UTILITY COLORS */
 .surplus { color: var(--success); }
 .loss { color: var(--danger); }
-input, select { background: #0f172a; border: 1px solid var(--border); color: white; padding: 6px; border-radius: 6px; width: 100%; font-size: 11px; }
-.date-input-grp { display: flex; flex-direction: column; min-width: 110px; }
-.date-input-grp label { font-size: 9px; color: #94a3b8; margin-bottom: 2px; }
-.toggle-row { display: flex; gap: 4px; margin-top: 4px; }
-.strategy-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; }
-.planner-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
-.logic-box { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid var(--border); min-height: 120px; }
-.audit-line { display: flex; justify-content: space-between; border-bottom: 1px dashed #334155; padding: 6px 0; font-family: 'Inter', sans-serif; }
-.pie-chart { width: 130px; height: 130px; border-radius: 50%; border: 2px solid var(--border); }
-.chart-flex { display: flex; align-items: center; justify-content: space-around; padding: 10px; }
-.suggestion-box { margin-top: 12px; padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border-left: 4px solid var(--accent); }
-.progress-container { background: var(--border); height: 20px; border-radius: 10px; position: relative; margin-top: 15px; overflow: hidden; }
-#progress-bar { background: var(--success); height: 100%; width: 0%; transition: 1s ease-in-out; }
-#progress-text { position: absolute; width: 100%; text-align: center; top: 0; line-height: 20px; font-weight: bold; }
-.save-btn { background: var(--success); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.primary-btn { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.footer-area { padding: 20px 0; border-top: 1px solid var(--border); margin-top: 20px; }
-.danger-btn { color: var(--danger); border: 1px solid var(--danger); background: transparent; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
-.btn-edit { background: var(--accent); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px; }
-.btn-del { background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+/* BUTTONS */
+button {
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+button:hover {
+    filter: brightness(1.2);
+}
+
+.save-btn { 
+    background: var(--success); 
+    color: white; 
+    border: none; 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    font-weight: bold;
+}
+
+.primary-btn { 
+    background: var(--accent); 
+    color: white; 
+    border: none; 
+    padding: 12px; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    width: 100%;
+}
+
+.danger-btn { 
+    color: var(--danger); 
+    border: 1px solid var(--danger); 
+    background: transparent; 
+    padding: 12px; 
+    border-radius: 8px; 
+    width: 100%; 
+    font-weight: bold; 
+}
+
+.btn-edit { 
+    background: var(--accent); 
+    color: white; 
+    border: none; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    margin-right: 4px; 
+}
+
+.btn-del { 
+    background: var(--danger); 
+    color: white; 
+    border: none; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+}
+
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar { 
+    width: 6px; 
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb { 
+    background: var(--border); 
+    border-radius: 10px; 
+}
+
+/* FOOTER */
+.footer-area { 
+    margin-top: 10px; 
+    padding-bottom: 50px; 
+    border-top: 1px solid var(--border); 
+    padding-top: 20px; 
+}
