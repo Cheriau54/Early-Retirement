@@ -20,16 +20,30 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 function initUI() {
+    // Populate dropdowns
     document.querySelectorAll('.curr-list').forEach(s => CURRENCIES.forEach(c => s.add(new Option(c, c))));
+    
+    // Load Settings
     const s = db.settings;
     set('master-currency', s.masterCurr); set('target-goal', s.goal); set('goal-curr', s.goalCurr);
     set('years-to-goal', s.years); set('inflation-rate', s.inflation); set('stock-growth', s.stkGrowth);
     set('income-val', s.income); set('income-freq', s.incomeFreq); set('income-curr', s.incomeCurr);
 
+    // Global listeners
     document.getElementById('master-currency').onchange = (e) => { db.settings.masterCurr = e.target.value; save(); refreshAll(false); };
-    document.getElementById('save-all-btn').onclick = () => { save(); alert("Data Saved!"); };
+    document.getElementById('save-all-btn').onclick = () => { save(); alert("Data Secured Locally!"); };
 
-    // --- FORM HANDLERS ---
+    // Equities Refresh Button Logic
+    document.getElementById('refresh-stocks-btn').onclick = async (e) => {
+        const btn = e.target;
+        btn.classList.add('loading');
+        btn.innerText = "⏳ Updates...";
+        await refreshAll(false, false); // Force stock fetch
+        btn.classList.remove('loading');
+        btn.innerText = "↻ Refresh Live";
+    };
+
+    // --- SMART MERGE FORM HANDLERS ---
     setupForm('form-liquid', () => {
         const n = val('liq-name'), a = fVal('liq-amount'), c = val('liq-curr');
         const idx = db.liquid.findIndex(i => i.name.toLowerCase() === n.toLowerCase() && i.currency === c);
@@ -46,7 +60,7 @@ function initUI() {
         const idx = db.stocks.findIndex(i => i.ticker === t);
         if(idx > -1) {
             const s = db.stocks[idx];
-            s.buyPrice = ((s.buyPrice * s.qty) + (b * q)) / (s.qty + q); // Weighted Average
+            s.buyPrice = ((s.buyPrice * s.qty) + (b * q)) / (s.qty + q); // Weighted Average Cost
             s.qty += q;
             db.stocks.unshift(db.stocks.splice(idx, 1)[0]);
         } else { db.stocks.unshift({id: Date.now(), ticker: t, qty: q, buyPrice: b}); }
@@ -60,15 +74,19 @@ function initUI() {
     });
 
     document.getElementById('calc-btn').onclick = () => { syncSettings(); refreshAll(false, true); };
-    document.getElementById('reset-btn').onclick = () => { if(confirm("Wipe all?")) { localStorage.clear(); location.reload(); }};
+    document.getElementById('reset-btn').onclick = () => { if(confirm("Clear system?")) { localStorage.clear(); location.reload(); }};
 }
 
-async function refreshAll(fullFetch = true, skipStocks = false) {
+async function refreshAll(fullFetch = true, skipStocks = true) {
     const mCurr = db.settings.masterCurr;
+    
+    // Update Currency labels in card headers
+    document.querySelectorAll('.header-curr-label').forEach(el => el.innerText = mCurr);
+
     try {
         const res = await fetch(`https://v6.exchangerate-api.com/v6/${FX_API}/latest/${mCurr}`).then(r => r.json());
         rates = res.conversion_rates;
-    } catch(e) { console.error("FX Error"); }
+    } catch(e) { console.error("FX Fail"); }
 
     let t = { liq: 0, fix: 0, stk: 0, debt: 0, yield: 0 };
 
@@ -93,7 +111,7 @@ async function refreshAll(fullFetch = true, skipStocks = false) {
                 s.lastLive = parseFloat(res["Global Quote"]?.["05. price"]) || s.buyPrice;
             } catch(e) { s.lastLive = s.buyPrice; }
         }
-        const mv = (s.qty * s.lastLive) / rates.USD; t.stk += mv; 
+        const mv = (s.qty * s.lastLive) / rates.USD; t.stk += (mv * rates.USD) / rates[mCurr]; 
         t.yield += (mv * (db.settings.stkGrowth/100));
         const pl = (s.lastLive - s.buyPrice) * s.qty;
         sBody.innerHTML += `<tr><td>${s.ticker}</td><td>${s.qty}</td><td>$${s.buyPrice.toFixed(2)}</td><td>$${s.lastLive.toFixed(2)}</td><td class="${pl>=0?'surplus':'loss'}">${pl.toFixed(0)}</td><td><button class="btn-edit" onclick="edit('stocks',${s.id})">Edit</button><button class="btn-del" onclick="del('stocks',${s.id})">✕</button></td></tr>`;
@@ -119,34 +137,35 @@ function renderSection(k, tid, rowFn) {
 }
 
 function renderAudit(nw, t) {
-    const s = db.settings; const nwG = nw * rates[s.goalCurr];
+    const s = db.settings; 
+    const nwInGoalCurr = (nw * rates[db.settings.masterCurr]) / rates[s.goalCurr]; 
     const totA = t.liq + t.fix + t.stk;
     const nY = totA > 0 ? (t.yield / totA) : 0;
     const rY = ((1 + nY) / (1 + (s.inflation/100))) - 1;
     const r = rY / 12, n = s.years * 12;
-    const fv = nwG * Math.pow(1 + r, n);
+    const fv = nwInGoalCurr * Math.pow(1 + r, n);
     const gap = Math.max(0, s.goal - fv);
     const req = gap > 0 ? (gap * r) / (Math.pow(1 + r, n) - 1) : 0;
     let inc = (s.income / rates[s.incomeCurr]) * rates[s.goalCurr];
     if(s.incomeFreq === 'annual') inc /= 12;
 
     document.getElementById('logic-output').innerHTML = `
-        <div class="audit-line"><span>Portfolio Real Yield</span><b>${(rY*100).toFixed(2)}%</b></div>
-        <div class="audit-line"><span>Projected Value (${s.years}y)</span><b>${fv.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line"><span>Shortfall vs Target</span><b class="loss">${gap.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line"><span>Required Monthly Savings</span><b class="surplus">${req.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line" style="border-top:1px solid #444;margin-top:5px;padding-top:5px"><span><b>Monthly Surplus/Loss</b></span><b class="${inc-req>=0?'surplus':'loss'}">${(inc-req).toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
+        <div class="audit-line"><span>Weighted Real Yield</span><b>${(rY*100).toFixed(2)}%</b></div>
+        <div class="audit-line"><span>Net Worth Projection (${s.years}y)</span><b>${fv.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
+        <div class="audit-line"><span>Target Gap</span><b class="loss">${gap.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
+        <div class="audit-line"><span>Monthly Savings Required</span><b class="surplus">${req.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
+        <div class="audit-line" style="border-top:1px solid #444;margin-top:8px;padding-top:8px"><span><b>Investment Budget Health</b></span><b class="${inc-req>=0?'surplus':'loss'}">${(inc-req).toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
     `;
-    const prg = Math.min((nwG/s.goal)*100, 100);
+    const prg = Math.min((nwInGoalCurr / s.goal) * 100, 100);
     document.getElementById('progress-bar').style.width = prg + "%";
-    document.getElementById('progress-text').innerText = prg.toFixed(1) + "% Achieved";
+    document.getElementById('progress-text').innerText = prg.toFixed(1) + "% of Goal Reached";
 }
 
 function updatePie(t) {
     const tot = t.liq + t.fix + t.stk; if(tot <= 0) return;
     const pL = (t.liq/tot)*100, pF = (t.fix/tot)*100, pS = (t.stk/tot)*100;
     document.getElementById('allocation-pie').style.background = `conic-gradient(#38bdf8 0% ${pL}%, #4ade80 ${pL}% ${pL+pF}%, #facc15 ${pL+pF}% 100%)`;
-    document.getElementById('chart-legend').innerHTML = `<div>Cash: ${pL.toFixed(0)}%</div><div>Fixed: ${pF.toFixed(0)}%</div><div>Stocks: ${pS.toFixed(0)}%</div>`;
+    document.getElementById('chart-legend').innerHTML = `<div style="color:#38bdf8">Liquid: ${pL.toFixed(1)}%</div><div style="color:#4ade80">Fixed: ${pF.toFixed(1)}%</div><div style="color:#facc15">Equities: ${pS.toFixed(1)}%</div>`;
 }
 
 function edit(k, id) {
