@@ -27,52 +27,40 @@ function initUI() {
     set('income-val', s.income); set('income-freq', s.incomeFreq); set('income-curr', s.incomeCurr);
 
     document.getElementById('master-currency').onchange = (e) => { db.settings.masterCurr = e.target.value; save(); refreshAll(false); };
-    document.getElementById('save-all-btn').onclick = () => { save(); alert("Progress Saved!"); };
+    document.getElementById('save-all-btn').onclick = () => { save(); alert("Data Saved!"); };
 
-    // --- LIQUID MERGE (Same Bank + Same Currency) ---
+    // --- FORM HANDLERS ---
     setupForm('form-liquid', () => {
         const n = val('liq-name'), a = fVal('liq-amount'), c = val('liq-curr');
         const idx = db.liquid.findIndex(i => i.name.toLowerCase() === n.toLowerCase() && i.currency === c);
-        if(idx > -1) {
-            db.liquid[idx].amount += a;
-            db.liquid.unshift(db.liquid.splice(idx, 1)[0]); // Move to top
-        } else {
-            db.liquid.unshift({id: Date.now(), name: n, amount: a, currency: c});
-        }
+        if(idx > -1) { db.liquid[idx].amount += a; db.liquid.unshift(db.liquid.splice(idx, 1)[0]); }
+        else { db.liquid.unshift({id: Date.now(), name: n, amount: a, currency: c}); }
     });
 
     setupForm('form-fixed', () => {
         db.fixed.unshift({ id: Date.now(), name: val('fix-name'), principal: fVal('fix-amount'), currency: val('fix-curr'), rate: fVal('fix-rate'), duration: parseInt(val('fix-duration')), start: val('fix-start') });
     });
 
-    // --- STOCK MERGE (Weighted Average Cost) ---
     setupForm('form-stocks', () => {
         const t = val('stk-ticker').toUpperCase(), q = fVal('stk-qty'), b = fVal('stk-buy');
         const idx = db.stocks.findIndex(i => i.ticker === t);
         if(idx > -1) {
             const s = db.stocks[idx];
-            s.buyPrice = ((s.buyPrice * s.qty) + (b * q)) / (s.qty + q); // Weighted Average Formula
+            s.buyPrice = ((s.buyPrice * s.qty) + (b * q)) / (s.qty + q); // Weighted Average
             s.qty += q;
-            db.stocks.unshift(db.stocks.splice(idx, 1)[0]); // Move to top
-        } else {
-            db.stocks.unshift({id: Date.now(), ticker: t, qty: q, buyPrice: b});
-        }
+            db.stocks.unshift(db.stocks.splice(idx, 1)[0]);
+        } else { db.stocks.unshift({id: Date.now(), ticker: t, qty: q, buyPrice: b}); }
     });
 
-    // --- DEBT MERGE (Same Name + Same Currency) ---
     setupForm('form-debt', () => {
         const n = val('debt-name'), a = fVal('debt-amount'), c = val('debt-curr');
         const idx = db.debt.findIndex(i => i.name.toLowerCase() === n.toLowerCase() && i.currency === c);
-        if(idx > -1) {
-            db.debt[idx].amount += a;
-            db.debt.unshift(db.debt.splice(idx, 1)[0]); // Move to top
-        } else {
-            db.debt.unshift({id: Date.now(), name: n, amount: a, currency: c});
-        }
+        if(idx > -1) { db.debt[idx].amount += a; db.debt.unshift(db.debt.splice(idx, 1)[0]); }
+        else { db.debt.unshift({id: Date.now(), name: n, amount: a, currency: c}); }
     });
 
     document.getElementById('calc-btn').onclick = () => { syncSettings(); refreshAll(false, true); };
-    document.getElementById('reset-btn').onclick = () => { if(confirm("Wipe all data?")) { localStorage.clear(); location.reload(); } };
+    document.getElementById('reset-btn').onclick = () => { if(confirm("Wipe all?")) { localStorage.clear(); location.reload(); }};
 }
 
 async function refreshAll(fullFetch = true, skipStocks = false) {
@@ -82,22 +70,22 @@ async function refreshAll(fullFetch = true, skipStocks = false) {
         rates = res.conversion_rates;
     } catch(e) { console.error("FX Error"); }
 
-    let totals = { liq: 0, fix: 0, stk: 0, debt: 0, yield: 0 };
+    let t = { liq: 0, fix: 0, stk: 0, debt: 0, yield: 0 };
 
-    renderSection('liquid', 'table-liquid', (item) => {
-        const mVal = item.amount / rates[item.currency]; totals.liq += mVal;
-        return `<td>${item.name}</td><td>${item.amount.toLocaleString()} ${item.currency}</td><td>${mVal.toFixed(0)}</td>`;
+    renderSection('liquid', 'table-liquid', (i) => {
+        const mv = i.amount / rates[i.currency]; t.liq += mv;
+        return `<td>${i.name}</td><td>${i.amount.toLocaleString()} ${i.currency}</td><td>${mv.toFixed(0)}</td>`;
     });
 
-    renderSection('fixed', 'table-fixed', (item) => {
-        const interest = item.principal * (item.rate/100) * (item.duration/12);
-        const mVal = (item.principal + interest) / rates[item.currency];
-        const endD = new Date(new Date(item.start).setMonth(new Date(item.start).getMonth() + item.duration)).toISOString().split('T')[0];
-        totals.fix += mVal; totals.yield += (mVal * (item.rate/100));
-        return `<td>${item.name}</td><td>${item.rate}%</td><td>${endD}</td><td class="surplus">${interest.toFixed(0)}</td><td>${(item.principal+interest).toFixed(0)}</td>`;
+    renderSection('fixed', 'table-fixed', (i) => {
+        const intr = i.principal * (i.rate/100) * (i.duration/12);
+        const mv = (i.principal + intr) / rates[i.currency];
+        const endD = new Date(new Date(i.start).setMonth(new Date(i.start).getMonth() + i.duration)).toISOString().split('T')[0];
+        t.fix += mv; t.yield += (mv * (i.rate/100));
+        return `<td>${i.name}</td><td>${i.rate}%</td><td>${endD}</td><td class="surplus">${intr.toFixed(0)}</td><td>${(i.principal+intr).toFixed(0)}</td>`;
     });
 
-    const stkBody = document.querySelector('#table-stocks tbody'); stkBody.innerHTML = '';
+    const sBody = document.querySelector('#table-stocks tbody'); sBody.innerHTML = '';
     for (let s of db.stocks) {
         if(!skipStocks || !s.lastLive) {
             try {
@@ -105,88 +93,78 @@ async function refreshAll(fullFetch = true, skipStocks = false) {
                 s.lastLive = parseFloat(res["Global Quote"]?.["05. price"]) || s.buyPrice;
             } catch(e) { s.lastLive = s.buyPrice; }
         }
-        const mVal = (s.qty * s.lastLive) / rates.USD; totals.stk += mVal; 
-        totals.yield += (mVal * (db.settings.stkGrowth/100));
+        const mv = (s.qty * s.lastLive) / rates.USD; t.stk += mv; 
+        t.yield += (mv * (db.settings.stkGrowth/100));
         const pl = (s.lastLive - s.buyPrice) * s.qty;
-        stkBody.innerHTML += `<tr><td>${s.ticker}</td><td>${s.qty}</td><td>$${s.buyPrice.toFixed(2)}</td><td>$${s.lastLive.toFixed(2)}</td><td class="${pl>=0?'surplus':'loss'}">${pl.toFixed(0)}</td><td><button class="btn-edit" onclick="edit('stocks',${s.id})">Edit</button><button class="btn-del" onclick="del('stocks',${s.id})">✕</button></td></tr>`;
+        sBody.innerHTML += `<tr><td>${s.ticker}</td><td>${s.qty}</td><td>$${s.buyPrice.toFixed(2)}</td><td>$${s.lastLive.toFixed(2)}</td><td class="${pl>=0?'surplus':'loss'}">${pl.toFixed(0)}</td><td><button class="btn-edit" onclick="edit('stocks',${s.id})">Edit</button><button class="btn-del" onclick="del('stocks',${s.id})">✕</button></td></tr>`;
     }
 
-    renderSection('debt', 'table-debt', (item) => {
-        const mVal = item.amount / rates[item.currency]; totals.debt += mVal;
-        return `<td>${item.name}</td><td class="loss">-${item.amount.toLocaleString()}</td><td>-${mVal.toFixed(0)}</td>`;
+    renderSection('debt', 'table-debt', (i) => {
+        const mv = i.amount / rates[i.currency]; t.debt += mv;
+        return `<td>${i.name}</td><td class="loss">-${i.amount.toLocaleString()}</td><td>-${mv.toFixed(0)}</td>`;
     });
 
-    const nw = totals.liq + totals.fix + totals.stk - totals.debt;
+    const nw = t.liq + t.fix + t.stk - t.debt;
     document.getElementById('total-net-worth').innerText = nw.toLocaleString(undefined, {max:0}) + " " + mCurr;
-    document.getElementById('acc-liq').innerText = totals.liq.toFixed(0);
-    document.getElementById('acc-fix').innerText = totals.fix.toFixed(0);
-    document.getElementById('acc-stk').innerText = totals.stk.toFixed(0);
-    document.getElementById('acc-debt').innerText = "-" + totals.debt.toFixed(0);
+    document.getElementById('acc-liq').innerText = t.liq.toFixed(0);
+    document.getElementById('acc-fix').innerText = t.fix.toFixed(0);
+    document.getElementById('acc-stk').innerText = t.stk.toFixed(0);
+    document.getElementById('acc-debt').innerText = "-" + t.debt.toFixed(0);
 
-    renderAudit(nw, totals);
-    updatePie(totals);
+    renderAudit(nw, t); updatePie(t);
 }
 
-function renderSection(key, tableId, rowFn) {
-    const body = document.querySelector(`#${tableId} tbody`);
-    body.innerHTML = db[key].map(item => `<tr>${rowFn(item)}<td><button class="btn-edit" onclick="edit('${key}',${item.id})">Edit</button><button class="btn-del" onclick="del('${key}',${item.id})">✕</button></td></tr>`).join('');
+function renderSection(k, tid, rowFn) {
+    document.querySelector(`#${tid} tbody`).innerHTML = db[k].map(i => `<tr>${rowFn(i)}<td><button class="btn-edit" onclick="edit('${k}',${i.id})">Edit</button><button class="btn-del" onclick="del('${k}',${i.id})">✕</button></td></tr>`).join('');
 }
 
 function renderAudit(nw, t) {
-    const s = db.settings;
-    const nwInGoalCurr = nw * rates[s.goalCurr];
-    const totalAssets = t.liq + t.fix + t.stk;
-    const nomYield = totalAssets > 0 ? (t.yield / totalAssets) : 0;
-    const realYield = ((1 + nomYield) / (1 + (s.inflation/100))) - 1;
-    const r = realYield / 12, n = s.years * 12;
-    const fv = nwInGoalCurr * Math.pow(1 + r, n);
+    const s = db.settings; const nwG = nw * rates[s.goalCurr];
+    const totA = t.liq + t.fix + t.stk;
+    const nY = totA > 0 ? (t.yield / totA) : 0;
+    const rY = ((1 + nY) / (1 + (s.inflation/100))) - 1;
+    const r = rY / 12, n = s.years * 12;
+    const fv = nwG * Math.pow(1 + r, n);
     const gap = Math.max(0, s.goal - fv);
-    const monthlyNeeded = gap > 0 ? (gap * r) / (Math.pow(1 + r, n) - 1) : 0;
-    
-    let monthlyIncome = (s.income / rates[s.incomeCurr]) * rates[s.goalCurr];
-    if(s.incomeFreq === 'annual') monthlyIncome /= 12;
-    const surplus = monthlyIncome - monthlyNeeded;
+    const req = gap > 0 ? (gap * r) / (Math.pow(1 + r, n) - 1) : 0;
+    let inc = (s.income / rates[s.incomeCurr]) * rates[s.goalCurr];
+    if(s.incomeFreq === 'annual') inc /= 12;
 
     document.getElementById('logic-output').innerHTML = `
-        <div class="audit-line"><span>Portfolio Real Yield</span><b>${(realYield*100).toFixed(2)}%</b></div>
+        <div class="audit-line"><span>Portfolio Real Yield</span><b>${(rY*100).toFixed(2)}%</b></div>
         <div class="audit-line"><span>Projected Value (${s.years}y)</span><b>${fv.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
         <div class="audit-line"><span>Shortfall vs Target</span><b class="loss">${gap.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line"><span>Required Monthly Savings</span><b class="surplus">${monthlyNeeded.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line" style="border-top:1px solid #444; margin-top:5px; padding-top:5px;"><span><b>Monthly Budget Surplus/Loss</b></span><b class="${surplus>=0?'surplus':'loss'}">${surplus.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
+        <div class="audit-line"><span>Required Monthly Savings</span><b class="surplus">${req.toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
+        <div class="audit-line" style="border-top:1px solid #444;margin-top:5px;padding-top:5px"><span><b>Monthly Surplus/Loss</b></span><b class="${inc-req>=0?'surplus':'loss'}">${(inc-req).toLocaleString(undefined,{max:0})} ${s.goalCurr}</b></div>
     `;
-
-    const prog = Math.min((nwInGoalCurr/s.goal)*100, 100);
-    document.getElementById('progress-bar').style.width = prog + "%";
-    document.getElementById('progress-text').innerText = prog.toFixed(1) + "% Achieved";
+    const prg = Math.min((nwG/s.goal)*100, 100);
+    document.getElementById('progress-bar').style.width = prg + "%";
+    document.getElementById('progress-text').innerText = prg.toFixed(1) + "% Achieved";
 }
 
 function updatePie(t) {
     const tot = t.liq + t.fix + t.stk; if(tot <= 0) return;
-    const pLiq = (t.liq/tot)*100, pFix = (t.fix/tot)*100, pStk = (t.stk/tot)*100;
-    document.getElementById('allocation-pie').style.background = `conic-gradient(#38bdf8 0% ${pLiq}%, #4ade80 ${pLiq}% ${pLiq+pFix}%, #facc15 ${pLiq+pFix}% 100%)`;
-    document.getElementById('chart-legend').innerHTML = `<div style="color:#38bdf8">Cash: ${pLiq.toFixed(0)}%</div><div style="color:#4ade80">Fixed: ${pFix.toFixed(0)}%</div><div style="color:#facc15">Stocks: ${pStk.toFixed(0)}%</div>`;
+    const pL = (t.liq/tot)*100, pF = (t.fix/tot)*100, pS = (t.stk/tot)*100;
+    document.getElementById('allocation-pie').style.background = `conic-gradient(#38bdf8 0% ${pL}%, #4ade80 ${pL}% ${pL+pF}%, #facc15 ${pL+pF}% 100%)`;
+    document.getElementById('chart-legend').innerHTML = `<div>Cash: ${pL.toFixed(0)}%</div><div>Fixed: ${pF.toFixed(0)}%</div><div>Stocks: ${pS.toFixed(0)}%</div>`;
 }
 
-function edit(key, id) {
-    const item = db[key].find(x => x.id === id);
-    if(key === 'liquid') { set('liq-name', item.name); set('liq-amount', item.amount); set('liq-curr', item.currency); }
-    if(key === 'fixed') { set('fix-name', item.name); set('fix-amount', item.principal); set('fix-rate', item.rate); set('fix-duration', item.duration); set('fix-start', item.start); }
-    if(key === 'stocks') { set('stk-ticker', item.ticker); set('stk-qty', item.qty); set('stk-buy', item.buyPrice); }
-    if(key === 'debt') { set('debt-name', item.name); set('debt-amount', item.amount); set('debt-curr', item.currency); }
-    del(key, id);
+function edit(k, id) {
+    const i = db[k].find(x => x.id === id);
+    if(k === 'liquid') { set('liq-name', i.name); set('liq-amount', i.amount); set('liq-curr', i.currency); }
+    else if(k === 'fixed') { set('fix-name', i.name); set('fix-amount', i.principal); set('fix-rate', i.rate); set('fix-duration', i.duration); set('fix-start', i.start); }
+    else if(k === 'stocks') { set('stk-ticker', i.ticker); set('stk-qty', i.qty); set('stk-buy', i.buyPrice); }
+    else if(k === 'debt') { set('debt-name', i.name); set('debt-amount', i.amount); set('debt-curr', i.currency); }
+    del(k, id);
 }
 
-function del(key, id) { db[key] = db[key].filter(x => x.id !== id); save(); refreshAll(false); }
+function del(k, id) { db[k] = db[k].filter(x => x.id !== id); save(); refreshAll(false); }
 function val(id) { return document.getElementById(id).value; }
 function fVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
 function set(id, v) { document.getElementById(id).value = v; }
 function setupForm(id, fn) { document.getElementById(id).onsubmit = (e) => { e.preventDefault(); fn(); save(); refreshAll(false); e.target.reset(); }; }
 function syncSettings() {
-    db.settings = { 
-        masterCurr: val('master-currency'), goal: fVal('target-goal'), goalCurr: val('goal-curr'), years: fVal('years-to-goal'), 
-        inflation: fVal('inflation-rate'), stkGrowth: fVal('stock-growth'), income: fVal('income-val'), 
-        incomeFreq: val('income-freq'), incomeCurr: val('income-curr') 
-    };
+    db.settings = { masterCurr: val('master-currency'), goal: fVal('target-goal'), goalCurr: val('goal-curr'), years: fVal('years-to-goal'), inflation: fVal('inflation-rate'), stkGrowth: fVal('stock-growth'), income: fVal('income-val'), incomeFreq: val('income-freq'), incomeCurr: val('income-curr') };
     save();
 }
 function save() { Object.keys(db).forEach(k => localStorage.setItem(`w_${k}`, JSON.stringify(db[k]))); }
