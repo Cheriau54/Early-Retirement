@@ -1,34 +1,35 @@
-/* --- PROFESSIONAL PURPLE-BLUE THEME --- */
+/* --- PROFESSIONAL PURPLE-BLUE DESIGN SYSTEM --- */
 :root {
     --bg-depth: #0f172a;           /* Deep Navy */
-    --card-bg: #1e293b;            /* Slate Blue */
-    --accent-primary: #818cf8;      /* Soft Indigo */
-    --accent-secondary: #c084fc;    /* Soft Purple */
+    --card-bg: #1e293b;            /* Slate Blue Card */
+    --accent-primary: #818cf8;      /* Indigo */
+    --accent-secondary: #c084fc;    /* Purple */
     --text-main: #f1f5f9;          /* Off White */
     --text-muted: #94a3b8;         /* Slate Gray */
-    --success-glow: #4ade80;       /* Neon Green */
-    --danger-glow: #f87171;        /* Soft Red */
-    --border-ui: #334155;          /* Muted Slate */
-    --input-fill: #0b1121;         /* Deepest Blue */
+    --success-glow: #4ade80;       /* Financial Green */
+    --danger-glow: #f87171;        /* Financial Red */
+    --border-ui: #334155;          /* Muted Slate Border */
+    --input-fill: #0b1121;         /* Deep Contrast Input */
+    --modal-overlay: rgba(0, 0, 0, 0.85);
 }
 
+/* --- BASE STYLES & UNIFIED FONTS --- */
 * {
     box-sizing: border-box;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-ui) transparent;
+    font-family: 'Inter', sans-serif; /* Unified UI font */
 }
 
 body {
     background-color: var(--bg-depth);
     color: var(--text-main);
-    font-family: 'Inter', sans-serif;
     padding: 25px;
     margin: 0;
     line-height: 1.5;
     font-size: 11.5px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-ui) transparent;
 }
 
-/* --- DASHBOARD STRUCTURE --- */
 #dashboard {
     max-width: 1440px;
     margin: 0 auto;
@@ -37,6 +38,7 @@ body {
     gap: 24px;
 }
 
+/* --- HEADER SECTION --- */
 header {
     display: flex;
     justify-content: space-between;
@@ -76,7 +78,7 @@ header {
     font-size: 2.8rem;
     font-weight: 800;
     color: var(--success-glow);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', monospace; /* Data font */
 }
 
 /* --- ASSET CARDS (STRICT 350PX HEIGHT) --- */
@@ -91,11 +93,10 @@ header {
     border: 1px solid var(--border-ui);
     border-radius: 16px;
     padding: 20px;
-    height: 350px; /* STRICT REQUIREMENT */
+    height: 350px; /* Fixed Requirement */
     display: flex;
     flex-direction: column;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease;
 }
 
 .card-header {
@@ -111,19 +112,19 @@ header {
     color: var(--accent-secondary);
 }
 
+/* --- ACCUMULATED VALUES & CURRENCY LABELS --- */
 .header-value-grp {
     display: flex;
     align-items: center;
     gap: 6px;
     background: rgba(0, 0, 0, 0.2);
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 8px;
 }
 
 .sec-accum {
     font-weight: 700;
     font-size: 1.2rem;
-    color: var(--text-main);
     font-family: 'JetBrains Mono', monospace;
 }
 
@@ -133,28 +134,20 @@ header {
     font-weight: 800;
 }
 
-/* --- REFRESH BUTTON STYLE --- */
-.refresh-mini-btn {
-    background: rgba(129, 140, 248, 0.1);
-    color: var(--accent-primary);
-    border: 1px solid var(--accent-primary);
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 10px;
-    cursor: pointer;
-    margin-left: 10px;
+/* Equity Header Specifics */
+.equity-header-grp {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
 }
 
-.refresh-mini-btn.loading {
-    animation: rotate 1s linear infinite;
+.equity-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    margin-bottom: 2px;
 }
 
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* --- DATA TABLES & SCROLLING --- */
+/* --- TABLES & SCROLL AREA --- */
 .scroll-area {
     flex: 1;
     overflow-y: auto;
@@ -179,7 +172,6 @@ th {
     padding: 10px 8px;
     font-size: 9px;
     text-transform: uppercase;
-    z-index: 2;
 }
 
 td {
@@ -188,7 +180,7 @@ td {
     color: var(--text-main);
 }
 
-/* --- LOGICAL DEDUCTION (FULL DISPLAY SPECIFICATION) --- */
+/* --- LOGICAL DEDUCTION (FULL DISPLAY) --- */
 .strategy-row {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
@@ -197,7 +189,7 @@ td {
 }
 
 .audit-full-card {
-    height: auto !important; /* ALLOWS FULL CONTENT DISPLAY */
+    height: auto !important; /* Full display requirement */
     min-height: 350px;
     overflow: visible;
 }
@@ -208,9 +200,6 @@ td {
     border-radius: 12px;
     padding: 20px;
     margin-top: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
 }
 
 .audit-line {
@@ -219,18 +208,51 @@ td {
     padding: 10px 0;
     border-bottom: 1px dashed var(--border-ui);
     font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
 }
 
-.audit-line span { color: var(--text-muted); }
-.audit-line b { color: var(--accent-primary); }
+.audit-line span {
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+}
+
+/* --- MODAL POP-UP SYSTEM --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--modal-overlay);
+    display: none; /* Controlled by JS */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    width: 450px;
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid var(--accent-primary);
+    box-shadow: 0 0 30px rgba(129, 140, 248, 0.3);
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
 
 /* --- INPUTS & BUTTONS --- */
-.entry-form .input-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
 input, select {
     background-color: var(--input-fill);
     border: 1px solid var(--border-ui);
@@ -238,32 +260,45 @@ input, select {
     padding: 8px 12px;
     border-radius: 8px;
     width: 100%;
+    font-family: 'JetBrains Mono', monospace;
 }
 
-input:focus {
-    border-color: var(--accent-secondary);
-    outline: none;
-}
-
-.primary-btn {
+.primary-btn, .save-btn {
     background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
     color: white;
     border: none;
-    padding: 14px;
-    border-radius: 10px;
+    padding: 12px;
+    border-radius: 8px;
     font-weight: 800;
     cursor: pointer;
     text-transform: uppercase;
 }
 
 .save-btn {
-    background-color: var(--success-glow);
+    background: var(--success-glow);
     color: var(--bg-depth);
-    padding: 10px 20px;
-    font-weight: 800;
 }
 
-/* --- ALLOCATION PIE --- */
+.btn-cancel {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-ui);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-save-modal {
+    background: var(--success-glow);
+    color: var(--bg-depth);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* --- CHART & PROGRESS --- */
 .pie-chart {
     width: 180px;
     height: 180px;
@@ -272,12 +307,6 @@ input:focus {
     margin: 0 auto;
 }
 
-.legend div {
-    margin-bottom: 8px;
-    font-weight: 700;
-}
-
-/* --- PROGRESS BAR --- */
 .progress-container {
     height: 24px;
     background: var(--input-fill);
@@ -292,22 +321,31 @@ input:focus {
     height: 100%;
     background: linear-gradient(to right, var(--success-glow), var(--accent-primary));
     width: 0%;
-    transition: width 1s ease-in-out;
 }
 
 #progress-text {
     position: absolute;
     width: 100%;
     text-align: center;
-    top: 3px;
+    top: 4px;
     font-weight: 800;
-    color: white;
     font-size: 10px;
 }
 
-/* --- STATUS COLORS --- */
+/* --- STATE COLORS --- */
 .surplus { color: var(--success-glow) !important; }
 .loss { color: var(--danger-glow) !important; }
+.pl-indicator { font-weight: 800; }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: var(--border-ui); border-radius: 10px; }
+.refresh-mini-btn {
+    background: rgba(129, 140, 248, 0.1);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.refresh-mini-btn.loading { animation: rotate 1s linear infinite; }
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
