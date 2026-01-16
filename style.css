@@ -1,4 +1,4 @@
-/* --- HELVETICA DESIGN SYSTEM: PURPLE-BLUE THEME --- */
+/* --- HELVETICA DESIGN SYSTEM: PROFESSIONAL PURPLE-BLUE THEME --- */
 :root {
     --bg-depth: #0f172a;           /* Deep Navy */
     --card-bg: #1e293b;            /* Slate Blue Card */
@@ -16,8 +16,8 @@
 /* --- GLOBAL RESET & FONT OVERRIDE --- */
 * {
     box-sizing: border-box;
-    /* Strict Helvetica Enforcement for all UI and Data values */
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* Strict Helvetica Enforcement for ALL UI and Data values */
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -27,7 +27,7 @@ body {
     padding: 25px;
     margin: 0;
     line-height: 1.4;
-    font-size: 13px; /* Slightly larger for Helvetica legibility */
+    font-size: 13px;
 }
 
 #dashboard {
@@ -38,7 +38,7 @@ body {
     gap: 25px;
 }
 
-/* --- HEADER & NET WORTH --- */
+/* --- MASTER HEADER & NET WORTH --- */
 header {
     display: flex;
     justify-content: space-between;
@@ -57,6 +57,13 @@ header {
     -webkit-text-fill-color: transparent;
 }
 
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+}
+
 .net-worth-card {
     text-align: right;
 }
@@ -64,7 +71,7 @@ header {
 .net-worth-card small {
     color: var(--text-muted);
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 1.5px;
     font-size: 11px;
 }
@@ -76,7 +83,7 @@ header {
     margin-top: 5px;
 }
 
-/* --- ASSET CARDS (STRICT 350PX HEIGHT) --- */
+/* --- ASSET GRID CARDS --- */
 .asset-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -88,7 +95,7 @@ header {
     border: 1px solid var(--border-ui);
     border-radius: 12px;
     padding: 20px;
-    height: 350px; /* Locked height */
+    height: 350px; /* Locked height requirement */
     display: flex;
     flex-direction: column;
     box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5);
@@ -108,7 +115,7 @@ header {
     color: var(--text-main);
 }
 
-/* --- VALUES & ACCUMULATORS --- */
+/* --- ACCUMULATORS & CURRENCY LABELS --- */
 .header-value-grp {
     display: flex;
     align-items: center;
@@ -130,7 +137,7 @@ header {
     font-weight: 700;
 }
 
-/* --- TABLES & SCROLL AREA --- */
+/* --- SCROLLABLE DATA TABLES --- */
 .scroll-area {
     flex: 1;
     overflow-y: auto;
@@ -164,10 +171,9 @@ td {
     border-bottom: 1px solid var(--border-ui);
     color: var(--text-main);
     font-size: 13px;
-    font-weight: 400;
 }
 
-/* --- AUDIT ENGINE (FULL DISPLAY) --- */
+/* --- LOWER AUDIT PANEL (FULL DISPLAY) --- */
 .strategy-row {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
@@ -176,7 +182,7 @@ td {
 }
 
 .audit-full-card {
-    height: auto !important; /* Overrides 350px to show all logic */
+    height: auto !important; /* Full expansion for the audit logic */
     min-height: 350px;
 }
 
@@ -200,11 +206,10 @@ td {
 }
 
 .audit-line b {
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
 }
 
-/* --- MODAL POP-UP --- */
+/* --- MODAL POP-UP WINDOW --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -213,7 +218,7 @@ td {
     height: 100%;
     background: var(--modal-overlay);
     backdrop-filter: blur(5px);
-    display: none; 
+    display: none; /* Controlled by JS */
     align-items: center;
     justify-content: center;
     z-index: 9999;
@@ -249,7 +254,7 @@ td {
     justify-content: flex-end;
 }
 
-/* --- INPUTS & UI CONTROLS --- */
+/* --- INPUTS & BUTTONS --- */
 input, select {
     background-color: var(--input-fill);
     border: 1px solid var(--border-ui);
@@ -266,6 +271,17 @@ input, select {
     border: none;
     padding: 15px;
     border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+}
+
+.save-btn {
+    background: var(--success-glow);
+    color: var(--bg-depth);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
     font-weight: 700;
     cursor: pointer;
 }
@@ -292,7 +308,26 @@ input, select {
     cursor: pointer;
 }
 
-/* --- PROGRESS & CHART --- */
+.btn-cancel {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-ui);
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-save-modal {
+    background: var(--success-glow);
+    color: var(--bg-depth);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* --- VISUAL ELEMENTS --- */
 .progress-container {
     height: 12px;
     background: var(--input-fill);
@@ -315,6 +350,6 @@ input, select {
     margin: 20px auto;
 }
 
-/* --- STATE STYLES --- */
+/* --- STATUS COLORS --- */
 .surplus { color: var(--success-glow) !important; }
 .loss { color: var(--danger-glow) !important; }
