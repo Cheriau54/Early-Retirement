@@ -3,344 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="description" content="Wealth Auditor Pro - Professional Portfolio Analytics & Logical Deduction Engine">
-    <meta name="author" content="Gemini Wealth Auditor">
-    <meta name="theme-color" content="#0f172a">
-    <title>Wealth Auditor Pro | Professional Portfolio Analytics</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap">
+    <title>Wealth Auditor Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="dashboard">
+<div id="app">
     <header>
-        <div class="header-main">
+        <div class="header-left">
             <h1>Wealth Auditor Pro</h1>
-            <div class="header-controls">
-                <div class="control-grp">
-                    <label style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Master Currency</label>
-                    <select id="master-currency" class="curr-list"></select>
+            <div class="global-controls">
+                <div class="input-group">
+                    <label>Master Currency</label>
+                    <select id="master-currency" class="curr-select"></select>
                 </div>
-                <button id="manual-save-btn" class="save-btn" style="background: var(--accent-primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: 700; cursor: pointer;">Save Data</button>
-                <button id="reset-btn" class="danger-btn">Wipe All Data</button>
+                <button id="btn-save" class="btn-primary">Save Data</button>
+                <button id="btn-wipe" class="btn-danger">Wipe All Data</button>
             </div>
         </div>
-        <div class="net-worth-card">
-            <small>Total Consolidated Net Worth</small>
-            <div id="total-net-worth">0.00</div>
+        <div class="header-center">
+            <small>Consolidated Net Worth</small>
+            <div id="main-net-worth">0.00</div>
         </div>
     </header>
 
-    <div class="asset-grid">
-        <div class="card">
+    <main class="dashboard-grid">
+        <section class="card" id="sec-liquid">
             <div class="card-header">
                 <h3>01. Liquid Assets</h3>
-                <div class="header-value-grp">
-                    <span id="acc-liq" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
-                </div>
+                <div id="acc-liquid" class="accumulator green">0.00</div>
             </div>
-            <form id="form-liquid" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="liq-name" placeholder="Account/Bank Name" required>
-                    <input type="number" id="liq-amount" placeholder="Amount" step="any" required>
-                    <select id="liq-curr" class="curr-list"></select>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
+            <form class="card-form" id="form-liquid">
+                <input type="text" placeholder="Bank Name" required>
+                <input type="number" placeholder="Balance" step="any" required>
+                <select class="curr-select"></select>
+                <button type="submit">Add</button>
             </form>
-            <div class="scroll-area">
+            <div class="table-container">
                 <table id="table-liquid">
-                    <thead>
-                        <tr>
-                            <th>Account Name</th>
-                            <th>Original Balance</th>
-                            <th>Converted Val</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Name</th><th>Balance</th><th>Master Value</th><th>Action</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <div class="card">
+        <section class="card" id="sec-fixed">
             <div class="card-header">
                 <h3>02. Fixed Savings</h3>
-                <div class="header-value-grp">
-                    <span id="acc-fix" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
-                </div>
+                <div id="acc-fixed" class="accumulator green">0.00</div>
             </div>
-            <form id="form-fixed" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="fix-name" placeholder="Plan/Bank" required>
-                    <input type="number" id="fix-amount" placeholder="Principal" required>
-                    <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
-                </div>
-                <div class="input-row" style="margin-top: 5px;">
-                    <input type="number" id="fix-duration" placeholder="Months" required>
-                    <input type="date" id="fix-start" required title="Start Date">
-                    <select id="fix-curr" class="curr-list"></select>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
+            <form class="card-form" id="form-fixed">
+                <input type="text" placeholder="Institution" required>
+                <input type="number" placeholder="Principal" required>
+                <input type="number" placeholder="Rate %" step="0.01" required>
+                <input type="number" placeholder="Months" required>
+                <input type="date" required>
+                <select class="curr-select"></select>
+                <button type="submit">Add</button>
             </form>
-            <div class="scroll-area">
+            <div class="table-container">
                 <table id="table-fixed">
-                    <thead>
-                        <tr>
-                            <th>Plan</th>
-                            <th>Rate</th>
-                            <th>Maturity</th>
-                            <th>Net Int.</th>
-                            <th>Future Val</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Inst.</th><th>Rate</th><th>Maturity</th><th>Interest</th><th>Total</th><th>Action</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <div class="card">
+        <section class="card span-2" id="sec-equities">
             <div class="card-header">
                 <h3>03. Equities Portfolio (USD)</h3>
-                <div class="header-value-grp">
-                    <div class="pl-definition-box" style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 10px;">
-                        <small style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; line-height: 1;">Total Unrealized P/L</small>
-                        <span id="stk-total-pl" class="pl-indicator" style="font-size: 12px; font-weight: 800;">0.00</span>
-                    </div>
-                    <button id="refresh-stocks-btn" title="Refresh Live Prices" style="background: var(--border-ui); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 10px;">Refresh</button>
-                    <span id="acc-stk" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
+                <div class="header-tools">
+                    <div class="pl-indicator">Total P/L: <span id="stk-pl">0.00</span></div>
+                    <button id="btn-refresh-stocks" class="btn-small">Refresh Prices</button>
+                    <div id="acc-equities" class="accumulator green">0.00</div>
                 </div>
             </div>
-            <form id="form-stocks" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="stk-ticker" placeholder="Symbol (e.g. NVDA)" required>
-                    <input type="number" id="stk-qty" placeholder="Quantity" step="any" required>
-                    <input type="number" id="stk-buy" placeholder="Avg Buy Price ($)" step="0.01" required>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
+            <form class="card-form" id="form-equities">
+                <input type="text" placeholder="Ticker" required>
+                <input type="number" placeholder="Qty" step="any" required>
+                <input type="number" placeholder="Avg Buy ($)" step="0.01" required>
+                <button type="submit">Add Position</button>
             </form>
-            <div class="scroll-area">
-                <table id="table-stocks">
-                    <thead>
-                        <tr>
-                            <th>Ticker</th>
-                            <th>Qty</th>
-                            <th>Buy Price</th>
-                            <th>Live Price</th>
-                            <th>P/L USD</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
+            <div class="table-container">
+                <table id="table-equities">
+                    <thead><tr><th>Ticker</th><th>Qty</th><th>Buy</th><th>Live</th><th>Value (USD)</th><th>P/L</th><th>P/L%</th><th>Action</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <div class="card">
+        <section class="card" id="sec-liabilities">
             <div class="card-header">
                 <h3>04. Liabilities</h3>
-                <div class="header-value-grp">
-                    <span id="acc-debt" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
-                </div>
+                <div id="acc-liabilities" class="accumulator red">0.00</div>
             </div>
-            <form id="form-debt" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="debt-name" placeholder="Debt Source" required>
-                    <input type="number" id="debt-amount" placeholder="Principal" step="any" required>
-                    <select id="debt-curr" class="curr-list"></select>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
+            <form class="card-form" id="form-liabilities">
+                <input type="text" placeholder="Creditor" required>
+                <input type="number" placeholder="Amount" step="any" required>
+                <select class="curr-select"></select>
+                <button type="submit">Add</button>
             </form>
-            <div class="scroll-area">
-                <table id="table-debt">
-                    <thead>
-                        <tr>
-                            <th>Debt Item</th>
-                            <th>Original Balance</th>
-                            <th>Converted Val</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
+            <div class="table-container">
+                <table id="table-liabilities">
+                    <thead><tr><th>Source</th><th>Amount</th><th>Master Value</th><th>Action</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
+        </section>
+
+        <section class="card audit-card" id="sec-audit">
+            <div class="card-header"><h3>05. Audit & Plan Health</h3></div>
+            <div class="audit-inputs">
+                <div class="input-row">
+                    <input type="number" id="goal-val" placeholder="Wealth Goal">
+                    <select id="goal-curr" class="curr-select"></select>
+                    <input type="number" id="goal-years" placeholder="Years">
+                </div>
+                <div class="input-row">
+                    <input type="number" id="income-val" placeholder="Monthly Income">
+                    <select id="income-curr" class="curr-select"></select>
+                    <input type="number" id="rate-inf" placeholder="Inflation %">
+                    <input type="number" id="rate-grow" placeholder="Growth %">
+                </div>
+                <button id="btn-run-audit" class="btn-audit">Run Capital Gap Analysis</button>
+            </div>
+            
+            <div id="audit-results" class="audit-results"></div>
+
+            <div class="progress-section">
+                <div class="progress-labels">
+                    <span id="prog-start">0</span>
+                    <span id="prog-pct">0% Achieved</span>
+                    <span id="prog-end">0</span>
+                </div>
+                <div class="progress-bar-wrap"><div id="progress-fill"></div></div>
+            </div>
+        </section>
+
+        <section class="card" id="sec-composition">
+            <div class="card-header"><h3>06. Portfolio Composition</h3></div>
+            <div class="chart-container">
+                <div id="pie-chart" class="pie-chart"></div>
+                <div id="pie-labels" class="pie-labels-overlay"></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Edit Record</h3>
+        <div id="modal-body"></div>
+        <div class="modal-footer">
+            <button onclick="closeModal()">Cancel</button>
+            <button id="btn-modal-save" class="btn-primary">Apply Changes</button>
         </div>
     </div>
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="description" content="Wealth Auditor Pro - Professional Portfolio Analytics & Logical Deduction Engine">
-    <meta name="author" content="Gemini Wealth Auditor">
-    <meta name="theme-color" content="#0f172a">
-    <title>Wealth Auditor Pro | Professional Portfolio Analytics</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+</div>
 
-<div id="dashboard">
-    <header>
-        <div class="header-main">
-            <h1>Wealth Auditor Pro</h1>
-            <div class="header-controls">
-                <div class="control-grp">
-                    <label style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Master Currency</label>
-                    <select id="master-currency" class="curr-list"></select>
-                </div>
-                <button id="manual-save-btn" class="save-btn" style="background: var(--accent-primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: 700; cursor: pointer;">Save Data</button>
-                <button id="reset-btn" class="danger-btn">Wipe All Data</button>
-            </div>
-        </div>
-        <div class="net-worth-card">
-            <small>Total Consolidated Net Worth</small>
-            <div id="total-net-worth">0.00</div>
-        </div>
-    </header>
-
-    <div class="asset-grid">
-        <div class="card">
-            <div class="card-header">
-                <h3>01. Liquid Assets</h3>
-                <div class="header-value-grp">
-                    <span id="acc-liq" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
-                </div>
-            </div>
-            <form id="form-liquid" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="liq-name" placeholder="Account/Bank Name" required>
-                    <input type="number" id="liq-amount" placeholder="Amount" step="any" required>
-                    <select id="liq-curr" class="curr-list"></select>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
-            </form>
-            <div class="scroll-area">
-                <table id="table-liquid">
-                    <thead>
-                        <tr>
-                            <th>Account Name</th>
-                            <th>Original Balance</th>
-                            <th>Converted Val</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3>02. Fixed Savings</h3>
-                <div class="header-value-grp">
-                    <span id="acc-fix" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
-                </div>
-            </div>
-            <form id="form-fixed" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="fix-name" placeholder="Plan/Bank" required>
-                    <input type="number" id="fix-amount" placeholder="Principal" required>
-                    <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
-                </div>
-                <div class="input-row" style="margin-top: 5px;">
-                    <input type="number" id="fix-duration" placeholder="Months" required>
-                    <input type="date" id="fix-start" required title="Start Date">
-                    <select id="fix-curr" class="curr-list"></select>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
-            </form>
-            <div class="scroll-area">
-                <table id="table-fixed">
-                    <thead>
-                        <tr>
-                            <th>Plan</th>
-                            <th>Rate</th>
-                            <th>Maturity</th>
-                            <th>Net Int.</th>
-                            <th>Future Val</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3>03. Equities Portfolio (USD)</h3>
-                <div class="header-value-grp">
-                    <div class="pl-definition-box" style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 10px;">
-                        <small style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; line-height: 1;">Total Unrealized P/L</small>
-                        <span id="stk-total-pl" class="pl-indicator" style="font-size: 12px; font-weight: 800;">0.00</span>
-                    </div>
-                    <button id="refresh-stocks-btn" title="Refresh Live Prices" style="background: var(--border-ui); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 10px;">Refresh</button>
-                    <span id="acc-stk" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
-                </div>
-            </div>
-            <form id="form-stocks" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="stk-ticker" placeholder="Symbol (e.g. NVDA)" required>
-                    <input type="number" id="stk-qty" placeholder="Quantity" step="any" required>
-                    <input type="number" id="stk-buy" placeholder="Avg Buy Price ($)" step="0.01" required>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
-            </form>
-            <div class="scroll-area">
-                <table id="table-stocks">
-                    <thead>
-                        <tr>
-                            <th>Ticker</th>
-                            <th>Qty</th>
-                            <th>Buy Price</th>
-                            <th>Live Price</th>
-                            <th>P/L USD</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3>04. Liabilities</h3>
-                <div class="header-value-grp">
-                    <span id="acc-debt" class="sec-accum">0</span>
-                    <span class="header-curr-label"></span>
-                </div>
-            </div>
-            <form id="form-debt" class="entry-form">
-                <div class="input-row">
-                    <input type="text" id="debt-name" placeholder="Debt Source" required>
-                    <input type="number" id="debt-amount" placeholder="Principal" step="any" required>
-                    <select id="debt-curr" class="curr-list"></select>
-                    <button type="submit" class="primary-btn-sm">Add</button>
-                </div>
-            </form>
-            <div class="scroll-area">
-                <table id="table-debt">
-                    <thead>
-                        <tr>
-                            <th>Debt Item</th>
-                            <th>Original Balance</th>
-                            <th>Converted Val</th>
-                            <th>Management</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+<script src="script.js"></script>
+</body>
+</html>
