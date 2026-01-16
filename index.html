@@ -3,164 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wealth Auditor Pro</title>
+    <title>Wealth Auditor Pro | Professional Capital Gap Analysis</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="app">
-    <header>
-        <div class="header-left">
+<div id="app-container">
+    <header class="main-header">
+        <div class="header-branding">
             <h1>Wealth Auditor Pro</h1>
-            <div class="global-controls">
-                <div class="input-group">
-                    <label>Master Currency</label>
-                    <select id="master-currency" class="curr-select"></select>
+            <div class="global-actions">
+                <div class="control-unit">
+                    <label for="master-currency">Master Currency</label>
+                    <select id="master-currency" class="auditor-select">
+                        <option value="HKD">HKD - Hong Kong Dollar</option>
+                        <option value="USD" selected>USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="JPY">JPY - Japanese Yen</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
+                        <option value="SGD">SGD - Singapore Dollar</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="KRW">KRW - South Korean Won</option>
+                    </select>
                 </div>
-                <button id="btn-save" class="btn-primary">Save Data</button>
-                <button id="btn-wipe" class="btn-danger">Wipe All Data</button>
+                <button id="save-all-btn" class="btn btn-save">Save Data</button>
+                <button id="wipe-all-btn" class="btn btn-wipe">Wipe All Data</button>
             </div>
         </div>
-        <div class="header-center">
-            <small>Consolidated Net Worth</small>
-            <div id="main-net-worth">0.00</div>
+
+        <div class="header-net-worth">
+            <small>Total Consolidated Net Worth</small>
+            <div id="display-total-net-worth">0.00</div>
         </div>
     </header>
 
-    <main class="dashboard-grid">
-        <section class="card" id="sec-liquid">
-            <div class="card-header">
-                <h3>01. Liquid Assets</h3>
-                <div id="acc-liquid" class="accumulator green">0.00</div>
+    <main class="auditor-grid">
+        
+        <section class="auditor-card" id="card-01">
+            <div class="card-title-bar">
+                <h2>01. Liquid Assets</h2>
+                <div id="total-01" class="card-accumulator">0.00</div>
             </div>
-            <form class="card-form" id="form-liquid">
-                <input type="text" placeholder="Bank Name" required>
-                <input type="number" placeholder="Balance" step="any" required>
-                <select class="curr-select"></select>
-                <button type="submit">Add</button>
+            <form id="form-01" class="auditor-form">
+                <input type="text" id="in-01-name" placeholder="Bank/Account Name" required>
+                <input type="number" id="in-01-amount" placeholder="Balance" step="any" required>
+                <select id="in-01-curr" class="auditor-select">
+                    <option value="HKD">HKD</option><option value="USD">USD</option>
+                    <option value="EUR">EUR</option><option value="CNY">CNY</option>
+                    <option value="GBP">GBP</option><option value="JPY">JPY</option>
+                    <option value="AUD">AUD</option><option value="SGD">SGD</option>
+                    <option value="CAD">CAD</option><option value="KRW">KRW</option>
+                </select>
+                <button type="submit" class="btn-add">Add Asset</button>
             </form>
-            <div class="table-container">
-                <table id="table-liquid">
-                    <thead><tr><th>Name</th><th>Balance</th><th>Master Value</th><th>Action</th></tr></thead>
+            <div class="table-wrapper">
+                <table id="table-01">
+                    <thead>
+                        <tr>
+                            <th>Account Name</th>
+                            <th>Original Balance</th>
+                            <th>Master Equivalent</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="auditor-card" id="card-02">
+            <div class="card-title-bar">
+                <h2>02. Fixed Savings</h2>
+                <div id="total-02" class="card-accumulator">0.00</div>
+            </div>
+            <form id="form-02" class="auditor-form form-multiline">
+                <input type="text" id="in-02-inst" placeholder="Institution" required>
+                <input type="number" id="in-02-princ" placeholder="Principal" step="any" required>
+                <input type="number" id="in-02-rate" placeholder="Rate %" step="0.01" required>
+                <input type="number" id="in-02-months" placeholder="Duration (Months)" required>
+                <input type="date" id="in-02-start" required title="Start Date">
+                <select id="in-02-curr" class="auditor-select">
+                    <option value="HKD">HKD</option><option value="USD">USD</option>
+                    <option value="EUR">EUR</option><option value="CNY">CNY</option>
+                    <option value="GBP">GBP</option><option value="JPY">JPY</option>
+                    <option value="AUD">AUD</option><option value="SGD">SGD</option>
+                    <option value="CAD">CAD</option><option value="KRW">KRW</option>
+                </select>
+                <button type="submit" class="btn-add">Add Plan</button>
+            </form>
+            <div class="table-wrapper">
+                <table id="table-02">
+                    <thead>
+                        <tr>
+                            <th>Institution</th>
+                            <th>Principal</th>
+                            <th>Rate %</th>
+                            <th>Maturity Date</th>
+                            <th>Net Interest</th>
+                            <th>Total Maturity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
 
-        <section class="card" id="sec-fixed">
-            <div class="card-header">
-                <h3>02. Fixed Savings</h3>
-                <div id="acc-fixed" class="accumulator green">0.00</div>
+        <section class="auditor-card span-two" id="card-03">
+            <div class="card-title-bar">
+                <div class="title-group">
+                    <h2>03. Equities Portfolio (USD)</h2>
+                    <button id="refresh-market-btn" class="btn-utility">Refresh Market Prices</button>
+                </div>
+                <div class="equities-meta">
+                    <div class="meta-item">Total Unrealized P/L (USD): <span id="equities-pl-usd">0.00</span></div>
+                    <div id="total-03" class="card-accumulator">0.00</div>
+                </div>
             </div>
-            <form class="card-form" id="form-fixed">
-                <input type="text" placeholder="Institution" required>
-                <input type="number" placeholder="Principal" required>
-                <input type="number" placeholder="Rate %" step="0.01" required>
-                <input type="number" placeholder="Months" required>
-                <input type="date" required>
-                <select class="curr-select"></select>
-                <button type="submit">Add</button>
+            <form id="form-03" class="auditor-form">
+                <input type="text" id="in-03-ticker" placeholder="Ticker Symbol" style="text-transform: uppercase;" required>
+                <input type="number" id="in-03-qty" placeholder="Quantity" step="any" required>
+                <input type="number" id="in-03-buy" placeholder="Avg Buy Price (USD)" step="0.01" required>
+                <button type="submit" class="btn-add">Add Position</button>
             </form>
-            <div class="table-container">
-                <table id="table-fixed">
-                    <thead><tr><th>Inst.</th><th>Rate</th><th>Maturity</th><th>Interest</th><th>Total</th><th>Action</th></tr></thead>
+            <div class="table-wrapper">
+                <table id="table-03">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Qty</th>
+                            <th>Avg Buy ($)</th>
+                            <th>Live Price ($)</th>
+                            <th>Market Value (USD)</th>
+                            <th>Unrealized P/L ($)</th>
+                            <th>P/L %</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
 
-        <section class="card span-2" id="sec-equities">
-            <div class="card-header">
-                <h3>03. Equities Portfolio (USD)</h3>
-                <div class="header-tools">
-                    <div class="pl-indicator">Total P/L: <span id="stk-pl">0.00</span></div>
-                    <button id="btn-refresh-stocks" class="btn-small">Refresh Prices</button>
-                    <div id="acc-equities" class="accumulator green">0.00</div>
-                </div>
+        <section class="auditor-card" id="card-04">
+            <div class="card-title-bar">
+                <h2>04. Liabilities</h2>
+                <div id="total-04" class="card-accumulator liability-text">0.00</div>
             </div>
-            <form class="card-form" id="form-equities">
-                <input type="text" placeholder="Ticker" required>
-                <input type="number" placeholder="Qty" step="any" required>
-                <input type="number" placeholder="Avg Buy ($)" step="0.01" required>
-                <button type="submit">Add Position</button>
+            <form id="form-04" class="auditor-form">
+                <input type="text" id="in-04-source" placeholder="Creditor/Source" required>
+                <input type="number" id="in-04-amount" placeholder="Debt Amount" step="any" required>
+                <select id="in-04-curr" class="auditor-select">
+                    <option value="HKD">HKD</option><option value="USD">USD</option>
+                    <option value="EUR">EUR</option><option value="CNY">CNY</option>
+                    <option value="GBP">GBP</option><option value="JPY">JPY</option>
+                    <option value="AUD">AUD</option><option value="SGD">SGD</option>
+                    <option value="CAD">CAD</option><option value="KRW">KRW</option>
+                </select>
+                <button type="submit" class="btn-add">Add Debt</button>
             </form>
-            <div class="table-container">
-                <table id="table-equities">
-                    <thead><tr><th>Ticker</th><th>Qty</th><th>Buy</th><th>Live</th><th>Value (USD)</th><th>P/L</th><th>P/L%</th><th>Action</th></tr></thead>
+            <div class="table-wrapper">
+                <table id="table-04">
+                    <thead>
+                        <tr>
+                            <th>Creditor</th>
+                            <th>Original Amount</th>
+                            <th>Master Equivalent</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
 
-        <section class="card" id="sec-liabilities">
-            <div class="card-header">
-                <h3>04. Liabilities</h3>
-                <div id="acc-liabilities" class="accumulator red">0.00</div>
+        <section class="auditor-card" id="card-05">
+            <div class="card-title-bar">
+                <h2>05. Audit & Investment Plan Health</h2>
             </div>
-            <form class="card-form" id="form-liabilities">
-                <input type="text" placeholder="Creditor" required>
-                <input type="number" placeholder="Amount" step="any" required>
-                <select class="curr-select"></select>
-                <button type="submit">Add</button>
-            </form>
-            <div class="table-container">
-                <table id="table-liabilities">
-                    <thead><tr><th>Source</th><th>Amount</th><th>Master Value</th><th>Action</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+            <div class="audit-dashboard">
+                <div class="audit-inputs-grid">
+                    <div class="input-unit">
+                        <label>Wealth Goal</label>
+                        <div class="input-with-curr">
+                            <input type="number" id="audit-goal-val" placeholder="0.00">
+                            <select id="audit-goal-curr" class="auditor-select">
+                                <option value="HKD">HKD</option><option value="USD">USD</option>
+                                <option value="EUR">EUR</option><option value="CNY">CNY</option>
+                                <option value="GBP">GBP</option><option value="JPY">JPY</option>
+                                <option value="AUD">AUD</option><option value="SGD">SGD</option>
+                                <option value="CAD">CAD</option><option value="KRW">KRW</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-unit">
+                        <label>Horizon (Years)</label>
+                        <input type="number" id="audit-years" placeholder="e.g. 10">
+                    </div>
+                    <div class="input-unit">
+                        <label>Monthly Income</label>
+                        <div class="input-with-curr">
+                            <input type="number" id="audit-income-val" placeholder="0.00">
+                            <select id="audit-income-curr" class="auditor-select">
+                                <option value="HKD">HKD</option><option value="USD">USD</option>
+                                <option value="EUR">EUR</option><option value="CNY">CNY</option>
+                                <option value="GBP">GBP</option><option value="JPY">JPY</option>
+                                <option value="AUD">AUD</option><option value="SGD">SGD</option>
+                                <option value="CAD">CAD</option><option value="KRW">KRW</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-unit">
+                        <label>Est. Inflation %</label>
+                        <input type="number" id="audit-inflation" step="0.1" placeholder="e.g. 3.0">
+                    </div>
+                    <div class="input-unit">
+                        <label>Est. Stock Growth %</label>
+                        <input type="number" id="audit-growth" step="0.1" placeholder="e.g. 8.0">
+                    </div>
+                </div>
+
+                <button id="run-audit-btn" class="btn btn-audit-action">Run Capital Gap Analysis</button>
+
+                <div id="audit-report" class="audit-report-area">
+                    </div>
+
+                <div class="ai-advice-container">
+                    <h4>In-Depth Strategic Advice</h4>
+                    <p id="ai-advice-text">Configure audit settings and run analysis to receive strategic asset reallocation and stock category guidance.</p>
+                </div>
+
+                <div class="audit-progress-wrap">
+                    <div class="progress-labels">
+                        <span id="prog-val-current">Current: 0.00</span>
+                        <span id="prog-percent-text">0% Achieved</span>
+                        <span id="prog-val-goal">Target: 0.00</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progress-fill-bar"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="card audit-card" id="sec-audit">
-            <div class="card-header"><h3>05. Audit & Plan Health</h3></div>
-            <div class="audit-inputs">
-                <div class="input-row">
-                    <input type="number" id="goal-val" placeholder="Wealth Goal">
-                    <select id="goal-curr" class="curr-select"></select>
-                    <input type="number" id="goal-years" placeholder="Years">
-                </div>
-                <div class="input-row">
-                    <input type="number" id="income-val" placeholder="Monthly Income">
-                    <select id="income-curr" class="curr-select"></select>
-                    <input type="number" id="rate-inf" placeholder="Inflation %">
-                    <input type="number" id="rate-grow" placeholder="Growth %">
-                </div>
-                <button id="btn-run-audit" class="btn-audit">Run Capital Gap Analysis</button>
+        <section class="auditor-card" id="card-06">
+            <div class="card-title-bar">
+                <h2>06. Portfolio Composition</h2>
             </div>
-            
-            <div id="audit-results" class="audit-results"></div>
-
-            <div class="progress-section">
-                <div class="progress-labels">
-                    <span id="prog-start">0</span>
-                    <span id="prog-pct">0% Achieved</span>
-                    <span id="prog-end">0</span>
-                </div>
-                <div class="progress-bar-wrap"><div id="progress-fill"></div></div>
+            <div class="pie-chart-container">
+                <div id="composition-pie-visual"></div>
+                <div id="direct-labels-overlay"></div>
             </div>
         </section>
 
-        <section class="card" id="sec-composition">
-            <div class="card-header"><h3>06. Portfolio Composition</h3></div>
-            <div class="chart-container">
-                <div id="pie-chart" class="pie-chart"></div>
-                <div id="pie-labels" class="pie-labels-overlay"></div>
-            </div>
-        </section>
     </main>
 </div>
 
-<div id="modal-overlay" class="modal-overlay">
-    <div class="modal-content">
-        <h3>Edit Record</h3>
-        <div id="modal-body"></div>
+<div id="global-edit-modal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Edit Financial Entry</h3>
+            <button class="close-modal-btn" onclick="closeEditModal()">×</button>
+        </div>
+        <div id="modal-fields-root" class="modal-body">
+            </div>
         <div class="modal-footer">
-            <button onclick="closeModal()">Cancel</button>
-            <button id="btn-modal-save" class="btn-primary">Apply Changes</button>
+            <button class="btn btn-cancel" onclick="closeEditModal()">Cancel</button>
+            <button id="save-modal-change-btn" class="btn btn-save">Apply Changes</button>
         </div>
     </div>
 </div>
 
-<script src="script.js"></script>
+<script src="app-logic.js"></script>
 </body>
 </html>
