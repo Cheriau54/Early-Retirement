@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wealth Tracker Pro - Financial Auditor</title>
+    <title>Wealth Tracker Pro - Professional Auditor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -10,9 +10,12 @@
         <header>
             <div class="header-main">
                 <h1 id="editable-title" contenteditable="true">Wealth Tracker</h1>
-                <div class="master-pivot">
-                    <label>Dashboard Pivot:</label>
-                    <select id="master-currency" class="curr-list"></select>
+                <div class="header-controls">
+                    <div class="master-pivot">
+                        <label>Dashboard Pivot:</label>
+                        <select id="master-currency" class="curr-list"></select>
+                    </div>
+                    <button id="save-all-btn" class="save-btn">Manual Save</button>
                 </div>
             </div>
             <div class="net-worth-card">
@@ -52,7 +55,10 @@
                     <div class="input-row">
                         <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
                         <input type="number" id="fix-duration" placeholder="Duration (Months)" required>
-                        <input type="date" id="fix-start" title="Start Date" required>
+                        <div class="date-input-grp">
+                            <label>Start Date:</label>
+                            <input type="date" id="fix-start" required>
+                        </div>
                         <button type="submit">Add</button>
                     </div>
                 </form>
@@ -100,7 +106,13 @@
                     <div class="p-field">Years: <input type="number" id="years-to-goal"></div>
                     <div class="p-field">Inflation %: <input type="number" id="inflation-rate" step="0.1"></div>
                     <div class="p-field">Stock Growth %: <input type="number" id="stock-growth" step="0.1"></div>
-                    <div class="p-field">Income: <input type="number" id="monthly-income"> <select id="income-curr" class="curr-list"></select></div>
+                    <div class="p-field">
+                        Income: <input type="number" id="income-val">
+                        <div class="toggle-row">
+                            <select id="income-freq"><option value="monthly">Monthly</option><option value="annual">Annual</option></select>
+                            <select id="income-curr" class="curr-list"></select>
+                        </div>
+                    </div>
                     <button id="calc-btn" class="primary-btn">Update Audit</button>
                 </div>
                 <div id="logic-output" class="logic-box"></div>
@@ -116,7 +128,10 @@
                 <div id="rebalance-suggestion" class="suggestion-box"></div>
             </section>
         </div>
-        <button id="reset-btn" class="danger-btn">Wipe All Data</button>
+        
+        <footer class="main-footer">
+            <button id="reset-btn" class="danger-btn">Wipe All Data</button>
+        </footer>
     </div>
     <script src="script.js"></script>
 </body>
