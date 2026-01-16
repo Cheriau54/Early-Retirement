@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wealth Tracker Pro | Financial Auditor</title>
+    <title>Wealth Auditor Pro | consolidated View</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="dashboard">
@@ -13,7 +14,7 @@
                 <h1 id="editable-title" contenteditable="true">Wealth Tracker</h1>
                 <div class="header-controls">
                     <div class="master-pivot">
-                        <label>Base Currency:</label>
+                        <label>Base View:</label>
                         <select id="master-currency" class="curr-list"></select>
                     </div>
                     <button id="save-all-btn" class="save-btn">Save Progress</button>
@@ -21,7 +22,7 @@
             </div>
             <div class="net-worth-card">
                 <small>Consolidated Net Worth</small>
-                <div id="total-net-worth">0.00</div>
+                <div id="total-net-worth">0.00 HKD</div>
             </div>
         </header>
 
@@ -32,7 +33,7 @@
                     <h3>1. Liquid Assets</h3>
                     <div class="header-value-grp">
                         <span id="acc-liq" class="sec-accum">0</span>
-                        <span class="header-curr-label"></span>
+                        <span class="header-curr-label">HKD</span>
                     </div>
                 </div>
                 <form id="form-liquid" class="entry-form">
@@ -58,7 +59,7 @@
                     <h3>2. Fixed Savings</h3>
                     <div class="header-value-grp">
                         <span id="acc-fix" class="sec-accum surplus">0</span>
-                        <span class="header-curr-label"></span>
+                        <span class="header-curr-label">HKD</span>
                     </div>
                 </div>
                 <form id="form-fixed" class="entry-form">
@@ -69,7 +70,7 @@
                     </div>
                     <div class="input-row">
                         <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
-                        <input type="number" id="fix-duration" placeholder="Duration (Months)" required>
+                        <input type="number" id="fix-duration" placeholder="Months" required>
                         <div class="date-input-grp">
                             <label>Start Date</label>
                             <input type="date" id="fix-start" required>
@@ -95,7 +96,7 @@
                     </div>
                     <div class="header-value-grp">
                         <span id="acc-stk" class="sec-accum">0</span>
-                        <span class="header-curr-label"></span>
+                        <span class="header-curr-label">HKD</span>
                     </div>
                 </div>
                 <form id="form-stocks" class="entry-form">
@@ -121,7 +122,7 @@
                     <h3>4. Liabilities</h3>
                     <div class="header-value-grp">
                         <span id="acc-debt" class="sec-accum loss">0</span>
-                        <span class="header-curr-label"></span>
+                        <span class="header-curr-label">HKD</span>
                     </div>
                 </div>
                 <form id="form-debt" class="entry-form">
@@ -163,7 +164,9 @@
                     </div>
                     <button id="calc-btn" class="primary-btn">Refresh Audit</button>
                 </div>
+
                 <div id="logic-output" class="logic-box-full"></div>
+
                 <div class="progress-container">
                     <div id="progress-bar"></div>
                     <span id="progress-text">0% Achieved</span>
