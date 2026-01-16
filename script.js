@@ -1,429 +1,295 @@
-/* --- CONFIGURATION & GLOBAL STATE --- */
-const FX_API = '393a43661559351810312743';
-const STOCK_API = 'RCOIHB62BAXECU2U';
-const CURRENCIES = ["HKD", "USD", "EUR", "CNY", "GBP", "JPY", "AUD", "SGD", "CAD"];
+/**
+ * WEALTH AUDITOR PRO - CORE ENGINE
+ * Logic: Swiss Banking Standard, Weighted Average Cost Basis, 
+ * Multi-Currency Pivot, and Persistent State.
+ */
 
-// Requirement 1 & 2: Full Data Persistence Logic
-let db = {
-    liquid: JSON.parse(localStorage.getItem('w_liquid')) || [],
-    fixed: JSON.parse(localStorage.getItem('w_fixed')) || [],
-    stocks: JSON.parse(localStorage.getItem('w_stocks')) || [],
-    debt: JSON.parse(localStorage.getItem('w_debt')) || [],
-    settings: JSON.parse(localStorage.getItem('w_settings')) || { 
-        masterCurr: "HKD", 
-        goal: 1000000, 
-        goalCurr: "HKD", 
-        years: 10, 
-        income: 50000, 
-        incomeFreq: "monthly", 
-        incomeCurr: "HKD", 
-        inflation: 2.5, 
-        stkGrowth: 7.0 
+// --- 1. CONFIGURATION & STATE ---
+const CONFIG = {
+    CURRENCIES: ['HKD', 'USD', 'EUR', 'CNY', 'GBP', 'JPY', 'AUD', 'SGD', 'CAD', 'KRW'],
+    // Mock Rates - In a production env, these would be fetched from ExchangeRate-API
+    RATES: { 
+        USD: 1, HKD: 7.82, EUR: 0.92, CNY: 7.19, GBP: 0.79, 
+        JPY: 150.21, AUD: 1.53, SGD: 1.35, CAD: 1.36, KRW: 1335.50 
     }
 };
 
-let rates = {};
-let currentEditState = null;
+let state = {
+    masterCurrency: 'USD',
+    liquid: [],      // {id, name, amount, currency}
+    fixed: [],       // {id, inst, principal, rate, months, start, currency}
+    equities: [],    // {id, ticker, qty, avgBuyUSD, livePriceUSD}
+    liabilities: [], // {id, source, amount, currency}
+    audit: {
+        goal: 0, goalCurr: 'USD', horizon: 0, income: 0, 
+        incomeCurr: 'USD', inflation: 3.0, growth: 8.0
+    }
+};
 
-/* --- UI INITIALIZATION --- */
-window.addEventListener('DOMContentLoaded', async () => {
-    initUI();
-    // Load existing data immediately on startup
-    await refreshAll(true);
-});
+// --- 2. UTILITIES: FORMATTING & MATH ---
 
-function initUI() {
-    // Populate all currency dropdowns across the application
-    const dropdowns = document.querySelectorAll('.curr-list');
-    dropdowns.forEach(select => {
-        CURRENCIES.forEach(curr => {
-            const option = new Option(curr, curr);
-            select.add(option);
+// Professional Digit Grouping Separator (e.g., 1,250,000.00)
+const formatNum = (num) => {
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(num);
+};
+
+const convert = (amount, from, to) => {
+    if (from === to) return amount;
+    const baseAmount = amount / CONFIG.RATES[from]; // Convert to USD base
+    return baseAmount * CONFIG.RATES[to];          // Convert to Target
+};
+
+// --- 3. UI REFRESH: TABLES & ACCUMULATORS ---
+
+const refreshUI = () => {
+    updateAccumulators();
+    renderLiquid();
+    renderFixed();
+    renderEquities();
+    renderLiabilities();
+    // Audit and Chart logic in Part 2
+    if (window.updateAuditResults) window.updateAuditResults(); 
+    if (window.renderPieChart) window.renderPieChart();
+};
+
+const updateAccumulators = () => {
+    const sum = (arr, type) => arr.reduce((acc, item) => {
+        let val = 0;
+        if (type === 'liquid' || type === 'liabilities') val = convert(item.amount, item.currency, state.masterCurrency);
+        if (type === 'fixed') {
+            const interest = item.principal * (item.rate / 100) * (item.months / 12);
+            val = convert(item.principal + interest, item.currency, state.masterCurrency);
+        }
+        if (type === 'equities') val = convert(item.qty * item.livePriceUSD, 'USD', state.masterCurrency);
+        return acc + val;
+    }, 0);
+
+    const liqTotal = sum(state.liquid, 'liquid');
+    const fixTotal = sum(state.fixed, 'fixed');
+    const eqTotal = sum(state.equities, 'equities');
+    const debtTotal = sum(state.liabilities, 'liabilities');
+
+    document.getElementById('total-01').textContent = formatNum(liqTotal);
+    document.getElementById('total-02').textContent = formatNum(fixTotal);
+    document.getElementById('total-03').textContent = formatNum(eqTotal);
+    document.getElementById('total-04').textContent = formatNum(debtTotal);
+
+    const netWorth = liqTotal + fixTotal + eqTotal - debtTotal;
+    document.getElementById('display-total-net-worth').textContent = formatNum(netWorth);
+    document.getElementById('display-total-net-worth').className = netWorth >= 0 ? 'green' : 'red';
+};
+
+// --- 4. SECTIONAL RENDERING ---
+
+const renderLiquid = () => {
+    const tbody = document.querySelector('#table-01 tbody');
+    tbody.innerHTML = '';
+    state.liquid.forEach(item => {
+        const masterVal = convert(item.amount, item.currency, state.masterCurrency);
+        tbody.innerHTML += `
+            <tr>
+                <td>${item.name}</td>
+                <td>${formatNum(item.amount)} ${item.currency}</td>
+                <td>${formatNum(masterVal)} ${state.masterCurrency}</td>
+                <td>
+                    <button class="btn-edit" onclick="openEditModal('liquid', '${item.id}')">Edit</button>
+                    <button class="btn-delete" onclick="deleteItem('liquid', '${item.id}')">Delete</button>
+                </td>
+            </tr>`;
+    });
+};
+
+const renderEquities = () => {
+    const tbody = document.querySelector('#table-03 tbody');
+    tbody.innerHTML = '';
+    let totalPL = 0;
+    state.equities.forEach(item => {
+        const marketVal = item.qty * item.livePriceUSD;
+        const costBasis = item.qty * item.avgBuyUSD;
+        const pl = marketVal - costBasis;
+        const plPct = (pl / costBasis) * 100;
+        totalPL += pl;
+
+        tbody.innerHTML += `
+            <tr>
+                <td style="font-weight:700">${item.ticker}</td>
+                <td>${item.qty}</td>
+                <td>${formatNum(item.avgBuyUSD)}</td>
+                <td>${formatNum(item.livePriceUSD)}</td>
+                <td>${formatNum(marketVal)}</td>
+                <td class="${pl >= 0 ? 'green' : 'red'}">${formatNum(pl)}</td>
+                <td class="${pl >= 0 ? 'green' : 'red'}">${plPct.toFixed(2)}%</td>
+                <td>
+                    <button class="btn-edit" onclick="openEditModal('equities', '${item.id}')">Edit</button>
+                    <button class="btn-delete" onclick="deleteItem('equities', '${item.id}')">Delete</button>
+                </td>
+            </tr>`;
+    });
+    document.getElementById('equities-pl-usd').textContent = formatNum(totalPL);
+    document.getElementById('equities-pl-usd').className = totalPL >= 0 ? 'green' : 'red';
+};
+
+// --- 5. ADD & MERGE LOGIC ---
+
+// Section 01: Liquid Merge Logic
+document.getElementById('form-01').onsubmit = (e) => {
+    e.preventDefault();
+    const name = document.getElementById('in-01-name').value;
+    const amount = parseFloat(document.getElementById('in-01-amount').value);
+    const currency = document.getElementById('in-01-curr').value;
+
+    const existing = state.liquid.find(i => i.name === name && i.currency === currency);
+    if (existing) {
+        existing.amount += amount;
+    } else {
+        state.liquid.push({ id: Date.now().toString(), name, amount, currency });
+    }
+    e.target.reset();
+    refreshUI();
+};
+
+// Section 03: Weighted Average Cost Basis Logic
+document.getElementById('form-03').onsubmit = (e) => {
+    e.preventDefault();
+    const ticker = document.getElementById('in-03-ticker').value.toUpperCase();
+    const qty = parseFloat(document.getElementById('in-03-qty').value);
+    const buy = parseFloat(document.getElementById('in-03-buy').value);
+
+    const existing = state.equities.find(i => i.ticker === ticker);
+    if (existing) {
+        const totalQty = existing.qty + qty;
+        existing.avgBuyUSD = ((existing.qty * existing.avgBuyUSD) + (qty * buy)) / totalQty;
+        existing.qty = totalQty;
+    } else {
+        state.equities.push({ 
+            id: Date.now().toString(), ticker, qty, avgBuyUSD: buy, 
+            livePriceUSD: buy * 1.05 // Simulating live price for now
         });
-    });
-    
-    // Synchronize UI Inputs with the Database Settings
-    const s = db.settings;
-    document.getElementById('master-currency').value = s.masterCurr;
-    document.getElementById('target-goal').value = s.goal;
-    document.getElementById('goal-curr').value = s.goalCurr;
-    document.getElementById('years-to-goal').value = s.years;
-    document.getElementById('inflation-rate').value = s.inflation;
-    document.getElementById('stock-growth').value = s.stkGrowth;
-    document.getElementById('income-val').value = s.income;
-    document.getElementById('income-curr').value = s.incomeCurr;
-
-    // Requirement 1: Explicit Manual Save Button
-    document.getElementById('manual-save-btn').onclick = () => {
-        syncSettings();
-        saveToDisk();
-        alert("Portfolio successfully saved to secure local storage.");
-    };
-
-    // Requirement 4: Stock Price Refresh Trigger
-    document.getElementById('refresh-stocks-btn').onclick = () => {
-        refreshAll(false, false); // force update of live prices
-    };
-
-    document.getElementById('master-currency').onchange = (e) => { 
-        db.settings.masterCurr = e.target.value; 
-        saveToDisk(); 
-        refreshAll(false); 
-    };
-
-    document.getElementById('form-edit-modal').onsubmit = (e) => {
-        e.preventDefault();
-        saveModalEdit();
-    };
-
-    // Global Calculation Trigger
-    document.getElementById('calc-btn').onclick = () => { 
-        syncSettings(); 
-        refreshAll(false, true); 
-    };
-
-    document.getElementById('reset-btn').onclick = () => {
-        if(confirm("Confirm: This will wipe all saved financial data permanently.")) {
-            localStorage.clear();
-            location.reload();
-        }
-    };
-}
-
-function syncSettings() {
-    db.settings = { 
-        masterCurr: document.getElementById('master-currency').value, 
-        goal: parseFloat(document.getElementById('target-goal').value) || 0, 
-        goalCurr: document.getElementById('goal-curr').value, 
-        years: parseFloat(document.getElementById('years-to-goal').value) || 0, 
-        inflation: parseFloat(document.getElementById('inflation-rate').value) || 0, 
-        stkGrowth: parseFloat(document.getElementById('stock-growth').value) || 0, 
-        income: parseFloat(document.getElementById('income-val').value) || 0, 
-        incomeFreq: "monthly", 
-        incomeCurr: document.getElementById('income-curr').value 
-    };
-    saveToDisk();
-}
-
-function saveToDisk() { 
-    localStorage.setItem('w_liquid', JSON.stringify(db.liquid));
-    localStorage.setItem('w_fixed', JSON.stringify(db.fixed));
-    localStorage.setItem('w_stocks', JSON.stringify(db.stocks));
-    localStorage.setItem('w_debt', JSON.stringify(db.debt));
-    localStorage.setItem('w_settings', JSON.stringify(db.settings));
-}
-/* --- ASSET ENTRY HANDLERS --- */
-document.getElementById('form-liquid').onsubmit = (e) => {
-    e.preventDefault();
-    const n = document.getElementById('liq-name').value;
-    const a = parseFloat(document.getElementById('liq-amount').value) || 0;
-    const c = document.getElementById('liq-curr').value;
-    
-    // Smart Merge: If account exists in same currency, update balance instead of duplicating
-    const idx = db.liquid.findIndex(i => i.name.toLowerCase() === n.toLowerCase() && i.currency === c);
-    if(idx > -1) {
-        db.liquid[idx].amount += a;
-        db.liquid[idx].id = Date.now();
-    } else {
-        db.liquid.unshift({id: Date.now(), name: n, amount: a, currency: c});
     }
-    saveToDisk(); refreshAll(false); e.target.reset();
+    e.target.reset();
+    refreshUI();
 };
 
-document.getElementById('form-fixed').onsubmit = (e) => {
-    e.preventDefault();
-    db.fixed.unshift({ 
-        id: Date.now(), 
-        name: document.getElementById('fix-name').value, 
-        principal: parseFloat(document.getElementById('fix-amount').value) || 0, 
-        currency: document.getElementById('fix-curr').value, 
-        rate: parseFloat(document.getElementById('fix-rate').value) || 0, 
-        duration: parseInt(document.getElementById('fix-duration').value), 
-        start: document.getElementById('fix-start').value 
-    });
-    saveToDisk(); refreshAll(false); e.target.reset();
+// --- GLOBAL PIVOT ---
+document.getElementById('master-currency').onchange = (e) => {
+    state.masterCurrency = e.target.value;
+    refreshUI();
 };
+// --- 6. AUDIT ENGINE: CAPITAL GAP ANALYSIS ---
 
-document.getElementById('form-stocks').onsubmit = (e) => {
-    e.preventDefault();
-    const t = document.getElementById('stk-ticker').value.toUpperCase();
-    const q = parseFloat(document.getElementById('stk-qty').value) || 0;
-    const b = parseFloat(document.getElementById('stk-buy').value) || 0;
+window.updateAuditResults = () => {
+    const g = state.audit;
+    const reportArea = document.getElementById('audit-report');
     
-    const idx = db.stocks.findIndex(i => i.ticker === t);
-    if(idx > -1) {
-        const s = db.stocks[idx];
-        // Weighted Average Cost calculation
-        s.buyPrice = ((s.buyPrice * s.qty) + (b * q)) / (s.qty + q);
-        s.qty += q;
-        s.id = Date.now();
-    } else { 
-        db.stocks.unshift({id: Date.now(), ticker: t, qty: q, buyPrice: b, lastLive: 0}); 
-    }
-    saveToDisk(); refreshAll(false); e.target.reset();
-};
+    // Future Value Projections
+    const years = g.horizon || 0;
+    const inf = g.inflation / 100;
+    const mGrowth = g.growth / 100;
 
-document.getElementById('form-debt').onsubmit = (e) => {
-    e.preventDefault();
-    const n = document.getElementById('debt-name').value;
-    const a = parseFloat(document.getElementById('debt-amount').value) || 0;
-    const c = document.getElementById('debt-curr').value;
-    db.debt.unshift({id: Date.now(), name: n, amount: a, currency: c});
-    saveToDisk(); refreshAll(false); e.target.reset();
-};
+    const curLiqMaster = state.liquid.reduce((acc, i) => acc + convert(i.amount, i.currency, state.masterCurrency), 0);
+    const curFixMaster = state.fixed.reduce((acc, i) => {
+        const maturity = i.principal + (i.principal * (i.rate/100) * (i.months/12));
+        return acc + convert(maturity, i.currency, state.masterCurrency);
+    }, 0);
+    const curEqMaster = state.equities.reduce((acc, i) => acc + convert(i.qty * i.livePriceUSD, 'USD', state.masterCurrency), 0);
 
-/* --- CORE RENDERING & CALCULATION ENGINE --- */
-async function refreshAll(fullFetch = true, skipStocks = true) {
-    const mCurr = db.settings.masterCurr;
-    
-    // Update Master Currency Labels globally
-    document.querySelectorAll('.header-curr-label').forEach(el => el.innerText = mCurr);
+    // Compound Interest Formula: FV = PV * (1 + r)^n
+    // For Liquid: Projected against inflation only (losing value)
+    const fvLiq = curLiqMaster * Math.pow(1 - inf, years);
+    const fvFix = curFixMaster; // Already calculated to maturity
+    const fvEq = curEqMaster * Math.pow(1 + (mGrowth - inf), years);
+    const totalFV = fvLiq + fvFix + fvEq;
 
-    // Fetch Forex Rates via API
-    if (fullFetch || Object.keys(rates).length === 0) {
-        try {
-            const res = await fetch(`https://v6.exchangerate-api.com/v6/${FX_API}/latest/${mCurr}`).then(r => r.json());
-            if (res.conversion_rates) rates = res.conversion_rates;
-        } catch(e) { console.error("Forex Sync Failed. Check API Key or Connection."); }
-    }
+    const goalMaster = convert(g.goal, g.goalCurr, state.masterCurrency);
+    const gap = goalMaster - totalFV;
+    const isSufficient = gap <= 0;
 
-    let t = { liq: 0, fix: 0, stk: 0, debt: 0, yield: 0, totalStkPL: 0 };
+    // Monthly Funding Requirement (Savings Gap)
+    // PMT = (Gap * r) / ((1 + r)^n - 1)
+    const monthlyRate = (mGrowth - inf) / 12;
+    const months = years * 12;
+    const reqMonthly = gap > 0 ? (gap * monthlyRate) / (Math.pow(1 + monthlyRate, months) - 1) : 0;
 
-    // 1. Render Liquid Table
-    const liqBody = document.querySelector('#table-liquid tbody');
-    liqBody.innerHTML = '';
-    db.liquid.sort((a,b) => b.id - a.id).forEach((i, idx) => {
-        const mv = i.amount / rates[i.currency];
-        t.liq += mv;
-        liqBody.innerHTML += `<tr><td>${i.name}</td><td>${i.amount.toLocaleString()} ${i.currency}</td><td>${mv.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-        <td><button class="btn-edit" onclick="openModal('liquid',${i.id})">Edit</button><button class="btn-del" onclick="del('liquid',${i.id})">✕</button></td></tr>`;
-    });
-
-    // 2. Render Fixed Savings Table
-    const fixBody = document.querySelector('#table-fixed tbody');
-    fixBody.innerHTML = '';
-    db.fixed.sort((a,b) => b.id - a.id).forEach((i, idx) => {
-        const interest = i.principal * (i.rate / 100) * (i.duration / 12);
-        const mv = (i.principal + interest) / rates[i.currency];
-        t.fix += mv; 
-        t.yield += (mv * (i.rate / 100));
-        const endD = new Date(new Date(i.start).setMonth(new Date(i.start).getMonth() + i.duration)).toISOString().split('T')[0];
-        fixBody.innerHTML += `<tr><td>${i.name}</td><td>${i.rate}%</td><td>${endD}</td><td class="surplus">${interest.toLocaleString()}</td><td>${(i.principal + interest).toLocaleString()}</td>
-        <td><button class="btn-edit" onclick="openModal('fixed',${i.id})">Edit</button><button class="btn-del" onclick="del('fixed',${i.id})">✕</button></td></tr>`;
-    });
-
-    // 3. Render Equities (Requirement 4: Detailed P/L & Refresh Logic)
-    const stkBody = document.querySelector('#table-stocks tbody');
-    stkBody.innerHTML = '';
-    for (let s of db.stocks) {
-        if (!skipStocks || s.lastLive === 0) {
-            try {
-                const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${s.ticker}&apikey=${STOCK_API}`).then(r => r.json());
-                const live = parseFloat(res["Global Quote"]?.["05. price"]);
-                if (live) s.lastLive = live;
-            } catch(e) { s.lastLive = s.lastLive || s.buyPrice; }
-        }
-        const marketValUSD = s.qty * s.lastLive;
-        const mvMaster = marketValUSD / (rates["USD"] || 1);
-        t.stk += mvMaster; 
-        t.yield += (mvMaster * (db.settings.stkGrowth / 100));
-        const plUSD = (s.lastLive - s.buyPrice) * s.qty;
-        t.totalStkPL += plUSD;
-        
-        stkBody.innerHTML += `<tr><td>${s.ticker}</td><td>${s.qty}</td><td>$${s.buyPrice.toFixed(2)}</td><td>$${s.lastLive.toFixed(2)}</td><td class="${plUSD >= 0 ? 'surplus' : 'loss'}">${plUSD.toLocaleString()}</td>
-        <td><button class="btn-edit" onclick="openModal('stocks',${s.id})">Edit</button><button class="btn-del" onclick="del('stocks',${s.id})">✕</button></td></tr>`;
-    }
-
-    // 4. Render Debt Table
-    const debtBody = document.querySelector('#table-debt tbody');
-    debtBody.innerHTML = '';
-    db.debt.sort((a,b) => b.id - a.id).forEach((i, idx) => {
-        const mv = i.amount / rates[i.currency];
-        t.debt += mv;
-        debtBody.innerHTML += `<tr><td>${i.name}</td><td class="loss">-${i.amount.toLocaleString()}</td><td>-${mv.toLocaleString()}</td>
-        <td><button class="btn-edit" onclick="openModal('debt',${i.id})">Edit</button><button class="btn-del" onclick="del('debt',${i.id})">✕</button></td></tr>`;
-    });
-
-    // Update Global Summaries
-    const netWorth = t.liq + t.fix + t.stk - t.debt;
-    document.getElementById('total-net-worth').innerText = netWorth.toLocaleString(undefined, {maximumFractionDigits: 0}) + " " + mCurr;
-    document.getElementById('acc-liq').innerText = t.liq.toLocaleString();
-    document.getElementById('acc-fix').innerText = t.fix.toLocaleString();
-    document.getElementById('acc-stk').innerText = t.stk.toLocaleString();
-    document.getElementById('acc-debt').innerText = "-" + t.debt.toLocaleString();
-    
-    // Pass totals to Audit Engine and Pie Chart
-    runAuditEngine(netWorth, t);
-    updateCompositionChart(t);
-}
-/* --- REQUIREMENT 5, 6 & 7: STRATEGIC AUDIT ENGINE --- */
-function runAuditEngine(nw, t) {
-    const s = db.settings;
-    
-    // 1. Convert Current Net Worth into Goal Currency
-    const nwInGoalCurr = (nw * (rates[s.masterCurr] || 1)) / (rates[s.goalCurr] || 1);
-    const totalAssets = t.liq + t.fix + t.stk;
-    
-    // 2. Real Yield Calculation (Inflation Adjusted)
-    const nominalYield = totalAssets > 0 ? (t.yield / totalAssets) : 0;
-    const realYield = ((1 + nominalYield) / (1 + (s.inflation / 100))) - 1;
-    const monthlyRate = realYield / 12;
-    const totalMonths = s.years * 12;
-    
-    // 3. Future Value Projection
-    const futureVal = nwInGoalCurr * Math.pow(1 + (monthlyRate || 0), (totalMonths || 0));
-    const gap = Math.max(0, s.goal - futureVal);
-    
-    // 4. Monthly Savings Requirement (PMT Formula)
-    let savingsReq = 0;
-    if (gap > 0) {
-        if (monthlyRate !== 0) {
-            savingsReq = (gap * monthlyRate) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
-        } else {
-            savingsReq = gap / (totalMonths || 1);
-        }
-    }
-    
-    // 5. Investment Plan Health (Requirement 5: Dynamic Surplus/Deficit)
-    const monthlyIncomeInGoalCurr = (s.income / rates[s.incomeCurr]) * rates[s.goalCurr];
-    const budgetHealth = monthlyIncomeInGoalCurr - savingsReq;
-
-    // 6. AI Strategic Suggestion Engine (Requirement 6)
-    let aiAdvice = "";
-    if (gap <= 0) {
-        aiAdvice = "STRATEGIC STATUS: OPTIMAL. Your current portfolio growth exceeds your objective. Focus on tax-optimization and wealth preservation strategies.";
-    } else if (budgetHealth >= 0) {
-        aiAdvice = `STRATEGIC STATUS: STABLE. You have a surplus of ${budgetHealth.toLocaleString()} ${s.goalCurr}. Direct this surplus into your Equities portfolio to accelerate your timeline.`;
-    } else {
-        aiAdvice = `STRATEGIC STATUS: DEFICIT. Your current income cannot bridge the ${gap.toLocaleString()} gap. Recommendation: Increase Equity growth target or extend horizon by ${(gap / (monthlyIncomeInGoalCurr * 12)).toFixed(1)} years.`;
-    }
-
-    // Update the Logic Box
-    document.getElementById('logic-output').innerHTML = `
-        <div class="audit-line"><span>Proj. Real Yield (Inflation Adj)</span><b>${(realYield * 100).toFixed(2)}%</b></div>
-        <div class="audit-line"><span>Future Portfolio Value (${s.years}y)</span><b>${futureVal.toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line"><span>Monthly Savings Required</span><b>${savingsReq.toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line">
-            <span>Investment Plan Health</span>
-            <b class="${budgetHealth >= 0 ? 'surplus' : 'loss'}">
-                ${budgetHealth >= 0 ? 'SURPLUS' : 'DEFICIT'}: ${Math.abs(budgetHealth).toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}
-            </b>
-        </div>
-        <div class="ai-suggestion-box">
-            <small>AI Strategic Analysis</small>
-            <p>${aiAdvice}</p>
+    reportArea.innerHTML = `
+        <div class="audit-breakdown">
+            <p>01. Projected Liquid: ${formatNum(fvLiq)}</p>
+            <p>02. Projected Fixed: ${formatNum(fvFix)}</p>
+            <p>03. Projected Equities: ${formatNum(fvEq)}</p>
+            <hr>
+            <p><strong>Total Projected FV: ${formatNum(totalFV)}</strong></p>
+            <p>Capital Gap: <span class="${gap > 0 ? 'red' : 'green'}">${formatNum(gap)}</span></p>
+            <h3>Status: ${isSufficient ? '[SUFFICIENT]' : '[INSUFFICIENT]'}</h3>
+            <p>Required Extra Monthly Savings: <strong>${formatNum(reqMonthly)} ${state.masterCurrency}</strong></p>
         </div>
     `;
 
-    // 7. Requirement 7: Functional Progress Bar
-    const progressPercent = Math.min((nwInGoalCurr / s.goal) * 100, 100) || 0;
-    const bar = document.getElementById('progress-bar');
-    const text = document.getElementById('progress-text');
-    
-    bar.style.width = progressPercent + "%";
-    text.innerText = progressPercent.toFixed(1) + "% to Goal";
-    
-    document.getElementById('progress-val-achieved').innerText = nwInGoalCurr.toLocaleString(undefined, {maximumFractionDigits:0}) + " " + s.goalCurr;
-    document.getElementById('progress-val-target').innerText = s.goal.toLocaleString() + " " + s.goalCurr;
-}
+    generateAIAdvice(isSufficient, gap, totalFV, goalMaster);
+    updateProgressBar(totalFV, goalMaster);
+};
 
-/* --- REQUIREMENT 8: LABELED COMPOSITION CHART --- */
-function updateCompositionChart(t) {
-    const total = t.liq + t.fix + t.stk;
-    const legend = document.getElementById('chart-legend');
-    const pie = document.getElementById('allocation-pie');
-    
-    legend.innerHTML = '';
-    
-    if (total <= 0) {
-        pie.style.background = '#334155';
-        legend.innerHTML = '<div class="legend-item">No asset data available</div>';
-        return;
-    }
+// --- 7. IN-DEPTH AI ADVICE ENGINE ---
 
-    const categories = [
-        { label: '01. Liquid', val: t.liq, color: '#818cf8' },
-        { label: '02. Fixed', val: t.fix, color: '#c084fc' },
-        { label: '03. Equities', val: t.stk, color: '#4ade80' }
-    ];
-
-    let currentStep = 0;
-    const gradient = categories.map(c => {
-        const pct = (c.val / total) * 100;
-        const start = currentStep;
-        currentStep += pct;
-
-        if (pct > 0) {
-            legend.innerHTML += `
-                <div class="legend-item">
-                    <div class="dot" style="background:${c.color}"></div>
-                    <span class="label-text">${c.label}</span>
-                    <span class="val-text">${c.val.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
-                    <span class="pct-badge">${pct.toFixed(1)}%</span>
-                </div>`;
-        }
-        return `${c.color} ${start}% ${currentStep}%`;
-    }).join(', ');
-
-    pie.style.background = `conic-gradient(${gradient})`;
-}
-
-/* --- MODAL MANAGEMENT & DATA CLEANUP --- */
-function openModal(cat, id) {
-    const item = db[cat].find(x => x.id === id);
-    currentEditState = { cat, id };
-    const container = document.getElementById('modal-fields');
-    
-    if (cat === 'stocks') {
-        container.innerHTML = `
-            <label>Ticker Symbol</label><input type="text" id="edit-1" value="${item.ticker}">
-            <label>Current Quantity</label><input type="number" id="edit-2" value="${item.qty}">
-            <label>Average Buy Price ($)</label><input type="number" id="edit-3" value="${item.buyPrice}">`;
-    } else if (cat === 'fixed') {
-        container.innerHTML = `
-            <label>Plan Name</label><input type="text" id="edit-1" value="${item.name}">
-            <label>Principal Amount</label><input type="number" id="edit-2" value="${item.principal}">
-            <label>Interest Rate %</label><input type="number" id="edit-3" value="${item.rate}">`;
+const generateAIAdvice = (sufficient, gap, fv, goal) => {
+    const adviceBox = document.getElementById('ai-advice-text');
+    if (sufficient) {
+        adviceBox.innerHTML = "Financial objective secured. Recommendation: Reallocate excess towards low-volatility ETFs or high-yield KRW/USD bonds to preserve capital. Current portfolio has high Capital Sufficiency.";
     } else {
-        container.innerHTML = `
-            <label>Description</label><input type="text" id="edit-1" value="${item.name}">
-            <label>Current Value</label><input type="number" id="edit-2" value="${item.amount}">`;
+        const pct = (fv / goal) * 100;
+        adviceBox.innerHTML = `Your current path covers ${pct.toFixed(1)}% of your goal. 
+            <strong>Strategic Reallocation:</strong> Move 25% of Liquid assets into S&P 500 Index funds or Quality Growth stocks (Technology/Healthcare sectors) to outpace the ${state.audit.inflation}% inflation rate. Consider increasing equity risk or extending horizon by ${Math.ceil(gap / (state.audit.income * 12))} years.`;
     }
-    document.getElementById('edit-modal').style.display = 'flex';
-}
+};
 
-function saveModalEdit() {
-    const { cat, id } = currentEditState;
-    const item = db[cat].find(x => x.id === id);
-    
-    const val1 = document.getElementById('edit-1').value;
-    const val2 = parseFloat(document.getElementById('edit-2').value);
-    const val3 = document.getElementById('edit-3') ? parseFloat(document.getElementById('edit-3').value) : null;
+// --- 8. PIE CHART WITH DIRECT LABELS ---
 
-    if (cat === 'stocks') {
-        item.ticker = val1.toUpperCase();
-        item.qty = val2;
-        item.buyPrice = val3;
-    } else if (cat === 'fixed') {
-        item.name = val1;
-        item.principal = val2;
-        item.rate = val3;
-    } else {
-        item.name = val1;
-        item.amount = val2;
+window.renderPieChart = () => {
+    const liq = state.liquid.reduce((acc, i) => acc + convert(i.amount, i.currency, state.masterCurrency), 0);
+    const fix = state.fixed.reduce((acc, i) => acc + convert(i.principal, i.currency, state.masterCurrency), 0);
+    const eq = state.equities.reduce((acc, i) => acc + convert(i.qty * i.livePriceUSD, 'USD', state.masterCurrency), 0);
+    const total = liq + fix + eq;
+
+    if (total === 0) return;
+
+    const pLiq = (liq / total) * 100;
+    const pFix = (fix / total) * 100;
+    const pEq = (eq / total) * 100;
+
+    const visual = document.getElementById('composition-pie-visual');
+    visual.style.background = `conic-gradient(
+        #4ade80 0% ${pLiq}%, 
+        #818cf8 ${pLiq}% ${pLiq + pFix}%, 
+        #fbbf24 ${pLiq + pFix}% 100%
+    )`;
+
+    // Direct Label Overlay
+    const labels = document.getElementById('direct-labels-overlay');
+    labels.innerHTML = `
+        <div class="pie-label" style="top:25%; left:75%">01: ${pLiq.toFixed(0)}%</div>
+        <div class="pie-label" style="top:75%; left:75%">02: ${pFix.toFixed(0)}%</div>
+        <div class="pie-label" style="top:50%; left:25%">03: ${pEq.toFixed(0)}%</div>
+    `;
+};
+
+// --- 9. PERSISTENCE & MODALS ---
+
+document.getElementById('save-all-btn').onclick = () => {
+    localStorage.setItem('wealthState', JSON.stringify(state));
+    alert('Portfolio Data Secured to LocalStorage.');
+};
+
+document.getElementById('wipe-all-btn').onclick = () => {
+    if (confirm("DANGER: This will permanently erase all auditor data. Proceed?")) {
+        localStorage.clear();
+        location.reload();
     }
-    
-    saveToDisk();
-    closeModal();
-    refreshAll(false);
-}
+};
 
-function closeModal() {
-    document.getElementById('edit-modal').style.display = 'none';
-}
-
-function del(cat, id) {
-    db[cat] = db[cat].filter(x => x.id !== id);
-    saveToDisk();
-    refreshAll(false);
-}
+// Initial Load
+window.onload = () => {
+    const saved = localStorage.getItem('wealthState');
+    if (saved) state = JSON.parse(saved);
+    refreshUI();
+};
