@@ -22,6 +22,7 @@
                     <label style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Master Currency</label>
                     <select id="master-currency" class="curr-list"></select>
                 </div>
+                <button id="manual-save-btn" class="save-btn" style="background: var(--accent-primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: 700; cursor: pointer;">Save Data</button>
                 <button id="reset-btn" class="danger-btn">Wipe All Data</button>
             </div>
         </div>
@@ -34,7 +35,7 @@
     <div class="asset-grid">
         <div class="card">
             <div class="card-header">
-                <h3>Liquid Assets</h3>
+                <h3>01. Liquid Assets</h3>
                 <div class="header-value-grp">
                     <span id="acc-liq" class="sec-accum">0</span>
                     <span class="header-curr-label"></span>
@@ -65,7 +66,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h3>Fixed Savings</h3>
+                <h3>02. Fixed Savings</h3>
                 <div class="header-value-grp">
                     <span id="acc-fix" class="sec-accum">0</span>
                     <span class="header-curr-label"></span>
@@ -103,9 +104,13 @@
 
         <div class="card">
             <div class="card-header">
-                <h3>Equities Portfolio</h3>
+                <h3>03. Equities Portfolio (USD)</h3>
                 <div class="header-value-grp">
-                    <span id="stk-total-pl" class="pl-indicator">0</span>
+                    <div class="pl-definition-box" style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 10px;">
+                        <small style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; line-height: 1;">Total Unrealized P/L</small>
+                        <span id="stk-total-pl" class="pl-indicator" style="font-size: 12px; font-weight: 800;">0.00</span>
+                    </div>
+                    <button id="refresh-stocks-btn" title="Refresh Live Prices" style="background: var(--border-ui); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 10px;">Refresh</button>
                     <span id="acc-stk" class="sec-accum">0</span>
                     <span class="header-curr-label"></span>
                 </div>
@@ -137,7 +142,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h3>Liabilities</h3>
+                <h3>04. Liabilities</h3>
                 <div class="header-value-grp">
                     <span id="acc-debt" class="sec-accum">0</span>
                     <span class="header-curr-label"></span>
@@ -166,106 +171,176 @@
             </div>
         </div>
     </div>
-<div class="strategy-row">
-        <div class="card audit-full-card">
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="Wealth Auditor Pro - Professional Portfolio Analytics & Logical Deduction Engine">
+    <meta name="author" content="Gemini Wealth Auditor">
+    <meta name="theme-color" content="#0f172a">
+    <title>Wealth Auditor Pro | Professional Portfolio Analytics</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="dashboard">
+    <header>
+        <div class="header-main">
+            <h1>Wealth Auditor Pro</h1>
+            <div class="header-controls">
+                <div class="control-grp">
+                    <label style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Master Currency</label>
+                    <select id="master-currency" class="curr-list"></select>
+                </div>
+                <button id="manual-save-btn" class="save-btn" style="background: var(--accent-primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: 700; cursor: pointer;">Save Data</button>
+                <button id="reset-btn" class="danger-btn">Wipe All Data</button>
+            </div>
+        </div>
+        <div class="net-worth-card">
+            <small>Total Consolidated Net Worth</small>
+            <div id="total-net-worth">0.00</div>
+        </div>
+    </header>
+
+    <div class="asset-grid">
+        <div class="card">
             <div class="card-header">
-                <h3>Logical Deduction & Audit Engine</h3>
+                <h3>01. Liquid Assets</h3>
+                <div class="header-value-grp">
+                    <span id="acc-liq" class="sec-accum">0</span>
+                    <span class="header-curr-label"></span>
+                </div>
             </div>
-            
-            <div class="entry-form">
+            <form id="form-liquid" class="entry-form">
                 <div class="input-row">
-                    <div class="input-grp">
-                        <label>Wealth Goal</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="number" id="target-goal" placeholder="e.g. 1000000">
-                            <select id="goal-curr" class="curr-list"></select>
-                        </div>
-                    </div>
-                    <div class="input-grp">
-                        <label>Time Horizon (Years)</label>
-                        <input type="number" id="years-to-goal" placeholder="Years">
-                    </div>
+                    <input type="text" id="liq-name" placeholder="Account/Bank Name" required>
+                    <input type="number" id="liq-amount" placeholder="Amount" step="any" required>
+                    <select id="liq-curr" class="curr-list"></select>
+                    <button type="submit" class="primary-btn-sm">Add</button>
                 </div>
-                
-                <div class="input-row" style="margin-top: 10px;">
-                    <div class="input-grp">
-                        <label>Monthly Income</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="number" id="income-val" placeholder="Amount">
-                            <select id="income-curr" class="curr-list"></select>
-                            <input type="hidden" id="income-freq" value="monthly">
-                        </div>
-                    </div>
-                    <div class="input-grp">
-                        <label>Expected Inflation %</label>
-                        <input type="number" id="inflation-rate" step="0.1" placeholder="2.5">
-                    </div>
-                </div>
-
-                <div class="input-row" style="margin-top: 10px;">
-                    <div class="input-grp">
-                        <label>Est. Annual Equity Growth %</label>
-                        <input type="number" id="stock-growth" step="0.1" placeholder="7.0">
-                    </div>
-                    <button id="calc-btn" class="primary-btn" style="align-self: flex-end; height: 38px;">
-                        Sync & Audit Portfolio
-                    </button>
-                </div>
-            </div>
-
-            <div id="logic-output" class="logic-box-full">
-                </div>
-
-            <div class="progress-container">
-                <div id="progress-bar"></div>
-                <div id="progress-text">0% to Goal</div>
-            </div>
-            <div class="progress-labels">
-                <div class="p-label">
-                    <span>Current Adjusted Value</span>
-                    <b id="progress-val-achieved">0</b>
-                </div>
-                <div class="p-label" style="text-align: right;">
-                    <span>Target Goal</span>
-                    <b id="progress-val-target">0</b>
-                </div>
+            </form>
+            <div class="scroll-area">
+                <table id="table-liquid">
+                    <thead>
+                        <tr>
+                            <th>Account Name</th>
+                            <th>Original Balance</th>
+                            <th>Converted Val</th>
+                            <th>Management</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h3>Portfolio Composition</h3>
-            </div>
-            <div class="chart-flex">
-                <div id="allocation-pie" class="pie-chart"></div>
-                
-                <div id="chart-legend" class="legend">
-                    </div>
-            </div>
-            
-            <div class="audit-disclaimer" style="margin-top: auto; padding-top: 15px; border-top: 1px solid var(--border-ui); font-size: 10px; color: var(--text-muted);">
-                *Projections are inflation-adjusted and based on current market rates and historical equity performance. 
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="edit-modal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="card-header" style="border-bottom: 1px solid var(--border-ui); padding-bottom: 15px;">
-            <h3 style="color: var(--accent-primary);">Modify Record</h3>
-        </div>
-        <form id="form-edit-modal">
-            <div id="modal-fields" class="modal-body">
+                <h3>02. Fixed Savings</h3>
+                <div class="header-value-grp">
+                    <span id="acc-fix" class="sec-accum">0</span>
+                    <span class="header-curr-label"></span>
                 </div>
-            <div class="modal-footer" style="margin-top: 25px; border-top: 1px solid var(--border-ui); padding-top: 15px;">
-                <button type="button" class="btn-cancel" onclick="closeModal()">Abandon Changes</button>
-                <button type="submit" class="btn-save-modal">Commit Updates</button>
             </div>
-        </form>
-    </div>
-</div>
+            <form id="form-fixed" class="entry-form">
+                <div class="input-row">
+                    <input type="text" id="fix-name" placeholder="Plan/Bank" required>
+                    <input type="number" id="fix-amount" placeholder="Principal" required>
+                    <input type="number" id="fix-rate" placeholder="Rate %" step="0.01" required>
+                </div>
+                <div class="input-row" style="margin-top: 5px;">
+                    <input type="number" id="fix-duration" placeholder="Months" required>
+                    <input type="date" id="fix-start" required title="Start Date">
+                    <select id="fix-curr" class="curr-list"></select>
+                    <button type="submit" class="primary-btn-sm">Add</button>
+                </div>
+            </form>
+            <div class="scroll-area">
+                <table id="table-fixed">
+                    <thead>
+                        <tr>
+                            <th>Plan</th>
+                            <th>Rate</th>
+                            <th>Maturity</th>
+                            <th>Net Int.</th>
+                            <th>Future Val</th>
+                            <th>Management</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
 
-<script src="script.js"></script>
-</body>
-</html>
+        <div class="card">
+            <div class="card-header">
+                <h3>03. Equities Portfolio (USD)</h3>
+                <div class="header-value-grp">
+                    <div class="pl-definition-box" style="display: flex; flex-direction: column; align-items: flex-end; margin-right: 10px;">
+                        <small style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; line-height: 1;">Total Unrealized P/L</small>
+                        <span id="stk-total-pl" class="pl-indicator" style="font-size: 12px; font-weight: 800;">0.00</span>
+                    </div>
+                    <button id="refresh-stocks-btn" title="Refresh Live Prices" style="background: var(--border-ui); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 10px;">Refresh</button>
+                    <span id="acc-stk" class="sec-accum">0</span>
+                    <span class="header-curr-label"></span>
+                </div>
+            </div>
+            <form id="form-stocks" class="entry-form">
+                <div class="input-row">
+                    <input type="text" id="stk-ticker" placeholder="Symbol (e.g. NVDA)" required>
+                    <input type="number" id="stk-qty" placeholder="Quantity" step="any" required>
+                    <input type="number" id="stk-buy" placeholder="Avg Buy Price ($)" step="0.01" required>
+                    <button type="submit" class="primary-btn-sm">Add</button>
+                </div>
+            </form>
+            <div class="scroll-area">
+                <table id="table-stocks">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Qty</th>
+                            <th>Buy Price</th>
+                            <th>Live Price</th>
+                            <th>P/L USD</th>
+                            <th>Management</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>04. Liabilities</h3>
+                <div class="header-value-grp">
+                    <span id="acc-debt" class="sec-accum">0</span>
+                    <span class="header-curr-label"></span>
+                </div>
+            </div>
+            <form id="form-debt" class="entry-form">
+                <div class="input-row">
+                    <input type="text" id="debt-name" placeholder="Debt Source" required>
+                    <input type="number" id="debt-amount" placeholder="Principal" step="any" required>
+                    <select id="debt-curr" class="curr-list"></select>
+                    <button type="submit" class="primary-btn-sm">Add</button>
+                </div>
+            </form>
+            <div class="scroll-area">
+                <table id="table-debt">
+                    <thead>
+                        <tr>
+                            <th>Debt Item</th>
+                            <th>Original Balance</th>
+                            <th>Converted Val</th>
+                            <th>Management</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
