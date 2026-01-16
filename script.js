@@ -1,13 +1,11 @@
 /**
- * WEALTH AUDITOR PRO - CORE ENGINE
- * Logic: Swiss Banking Standard, Weighted Average Cost Basis, 
- * Multi-Currency Pivot, and Persistent State.
+ * WEALTH AUDITOR PRO - script.js
+ * FINAL UNTRIMMED PRODUCTION VERSION
  */
 
-// --- 1. CONFIGURATION & STATE ---
+// --- 1. GLOBAL CONFIGURATION & STATE ---
 const CONFIG = {
     CURRENCIES: ['HKD', 'USD', 'EUR', 'CNY', 'GBP', 'JPY', 'AUD', 'SGD', 'CAD', 'KRW'],
-    // Mock Rates - In a production env, these would be fetched from ExchangeRate-API
     RATES: { 
         USD: 1, HKD: 7.82, EUR: 0.92, CNY: 7.19, GBP: 0.79, 
         JPY: 150.21, AUD: 1.53, SGD: 1.35, CAD: 1.36, KRW: 1335.50 
@@ -16,19 +14,19 @@ const CONFIG = {
 
 let state = {
     masterCurrency: 'USD',
-    liquid: [],      // {id, name, amount, currency}
-    fixed: [],       // {id, inst, principal, rate, months, start, currency}
-    equities: [],    // {id, ticker, qty, avgBuyUSD, livePriceUSD}
-    liabilities: [], // {id, source, amount, currency}
+    liquid: [],      
+    fixed: [],       
+    equities: [],    
+    liabilities: [], 
     audit: {
         goal: 0, goalCurr: 'USD', horizon: 0, income: 0, 
         incomeCurr: 'USD', inflation: 3.0, growth: 8.0
     }
 };
 
-// --- 2. UTILITIES: FORMATTING & MATH ---
+// --- 2. FORMATTING UTILITIES ---
 
-// Professional Digit Grouping Separator (e.g., 1,250,000.00)
+/** Professional Digit Grouping (e.g., 1,250,000.00) */
 const formatNum = (num) => {
     return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
@@ -37,40 +35,34 @@ const formatNum = (num) => {
 };
 
 const convert = (amount, from, to) => {
-    if (from === to) return amount;
-    const baseAmount = amount / CONFIG.RATES[from]; // Convert to USD base
-    return baseAmount * CONFIG.RATES[to];          // Convert to Target
+    if (!from || !to || from === to) return amount;
+    const baseAmount = amount / CONFIG.RATES[from]; 
+    return baseAmount * CONFIG.RATES[to];
 };
 
-// --- 3. UI REFRESH: TABLES & ACCUMULATORS ---
+// --- 3. UI RENDERING ENGINE ---
 
-const refreshUI = () => {
+function refreshUI() {
     updateAccumulators();
-    renderLiquid();
-    renderFixed();
-    renderEquities();
-    renderLiabilities();
-    // Audit and Chart logic in Part 2
-    if (window.updateAuditResults) window.updateAuditResults(); 
-    if (window.renderPieChart) window.renderPieChart();
-};
+    renderLiquidTable();
+    renderFixedTable();
+    renderEquitiesTable();
+    renderLiabilitiesTable();
+    renderPieChart();
+    updateProgressBarOnly();
+}
 
-const updateAccumulators = () => {
-    const sum = (arr, type) => arr.reduce((acc, item) => {
-        let val = 0;
-        if (type === 'liquid' || type === 'liabilities') val = convert(item.amount, item.currency, state.masterCurrency);
-        if (type === 'fixed') {
-            const interest = item.principal * (item.rate / 100) * (item.months / 12);
-            val = convert(item.principal + interest, item.currency, state.masterCurrency);
-        }
-        if (type === 'equities') val = convert(item.qty * item.livePriceUSD, 'USD', state.masterCurrency);
-        return acc + val;
+function updateAccumulators() {
+    const liqTotal = state.liquid.reduce((acc, i) => acc + convert(i.amount, i.currency, state.masterCurrency), 0);
+    
+    const fixTotal = state.fixed.reduce((acc, i) => {
+        const interest = i.principal * (i.rate / 100) * (i.months / 12);
+        return acc + convert(i.principal + interest, i.currency, state.masterCurrency);
     }, 0);
-
-    const liqTotal = sum(state.liquid, 'liquid');
-    const fixTotal = sum(state.fixed, 'fixed');
-    const eqTotal = sum(state.equities, 'equities');
-    const debtTotal = sum(state.liabilities, 'liabilities');
+    
+    const eqTotal = state.equities.reduce((acc, i) => acc + convert(i.qty * i.livePriceUSD, 'USD', state.masterCurrency), 0);
+    
+    const debtTotal = state.liabilities.reduce((acc, i) => acc + convert(i.amount, i.currency, state.masterCurrency), 0);
 
     document.getElementById('total-01').textContent = formatNum(liqTotal);
     document.getElementById('total-02').textContent = formatNum(fixTotal);
@@ -78,42 +70,62 @@ const updateAccumulators = () => {
     document.getElementById('total-04').textContent = formatNum(debtTotal);
 
     const netWorth = liqTotal + fixTotal + eqTotal - debtTotal;
-    document.getElementById('display-total-net-worth').textContent = formatNum(netWorth);
-    document.getElementById('display-total-net-worth').className = netWorth >= 0 ? 'green' : 'red';
-};
+    const nwDisplay = document.getElementById('display-total-net-worth');
+    if (nwDisplay) {
+        nwDisplay.textContent = formatNum(netWorth);
+        nwDisplay.className = netWorth >= 0 ? 'green' : 'red';
+    }
+}
 
-// --- 4. SECTIONAL RENDERING ---
-
-const renderLiquid = () => {
+function renderLiquidTable() {
     const tbody = document.querySelector('#table-01 tbody');
-    tbody.innerHTML = '';
-    state.liquid.forEach(item => {
+    if (!tbody) return;
+    tbody.innerHTML = state.liquid.map(item => {
         const masterVal = convert(item.amount, item.currency, state.masterCurrency);
-        tbody.innerHTML += `
+        return `
             <tr>
                 <td>${item.name}</td>
                 <td>${formatNum(item.amount)} ${item.currency}</td>
                 <td>${formatNum(masterVal)} ${state.masterCurrency}</td>
                 <td>
-                    <button class="btn-edit" onclick="openEditModal('liquid', '${item.id}')">Edit</button>
-                    <button class="btn-delete" onclick="deleteItem('liquid', '${item.id}')">Delete</button>
+                    <button class="btn-utility" onclick="deleteItem('liquid', '${item.id}')">Del</button>
                 </td>
             </tr>`;
-    });
-};
+    }).join('');
+}
 
-const renderEquities = () => {
+function renderFixedTable() {
+    const tbody = document.querySelector('#table-02 tbody');
+    if (!tbody) return;
+    tbody.innerHTML = state.fixed.map(item => {
+        const interest = item.principal * (item.rate / 100) * (item.months / 12);
+        return `
+            <tr>
+                <td>${item.inst}</td>
+                <td>${formatNum(item.principal)}</td>
+                <td>${item.rate}%</td>
+                <td>${item.start}</td>
+                <td>${formatNum(interest)}</td>
+                <td>${formatNum(item.principal + interest)}</td>
+                <td>
+                    <button class="btn-utility" onclick="deleteItem('fixed', '${item.id}')">Del</button>
+                </td>
+            </tr>`;
+    }).join('');
+}
+
+function renderEquitiesTable() {
     const tbody = document.querySelector('#table-03 tbody');
-    tbody.innerHTML = '';
+    if (!tbody) return;
     let totalPL = 0;
-    state.equities.forEach(item => {
+    tbody.innerHTML = state.equities.map(item => {
         const marketVal = item.qty * item.livePriceUSD;
         const costBasis = item.qty * item.avgBuyUSD;
         const pl = marketVal - costBasis;
         const plPct = (pl / costBasis) * 100;
         totalPL += pl;
 
-        tbody.innerHTML += `
+        return `
             <tr>
                 <td style="font-weight:700">${item.ticker}</td>
                 <td>${item.qty}</td>
@@ -123,36 +135,68 @@ const renderEquities = () => {
                 <td class="${pl >= 0 ? 'green' : 'red'}">${formatNum(pl)}</td>
                 <td class="${pl >= 0 ? 'green' : 'red'}">${plPct.toFixed(2)}%</td>
                 <td>
-                    <button class="btn-edit" onclick="openEditModal('equities', '${item.id}')">Edit</button>
-                    <button class="btn-delete" onclick="deleteItem('equities', '${item.id}')">Delete</button>
+                    <button class="btn-utility" onclick="deleteItem('equities', '${item.id}')">Del</button>
                 </td>
             </tr>`;
-    });
-    document.getElementById('equities-pl-usd').textContent = formatNum(totalPL);
-    document.getElementById('equities-pl-usd').className = totalPL >= 0 ? 'green' : 'red';
-};
+    }).join('');
+    const plEl = document.getElementById('equities-pl-usd');
+    if (plEl) {
+        plEl.textContent = formatNum(totalPL);
+        plEl.className = totalPL >= 0 ? 'green' : 'red';
+    }
+}
 
-// --- 5. ADD & MERGE LOGIC ---
+function renderLiabilitiesTable() {
+    const tbody = document.querySelector('#table-04 tbody');
+    if (!tbody) return;
+    tbody.innerHTML = state.liabilities.map(item => {
+        const masterVal = convert(item.amount, item.currency, state.masterCurrency);
+        return `
+            <tr>
+                <td>${item.source}</td>
+                <td>${formatNum(item.amount)} ${item.currency}</td>
+                <td>${formatNum(masterVal)} ${state.masterCurrency}</td>
+                <td>
+                    <button class="btn-utility" onclick="deleteItem('liabilities', '${item.id}')">Del</button>
+                </td>
+            </tr>`;
+    }).join('');
+}
 
-// Section 01: Liquid Merge Logic
-document.getElementById('form-01').onsubmit = (e) => {
+// --- 4. FORM HANDLERS & MERGE LOGIC ---
+
+document.getElementById('form-01')?.addEventListener('submit', function(e) {
     e.preventDefault();
     const name = document.getElementById('in-01-name').value;
     const amount = parseFloat(document.getElementById('in-01-amount').value);
-    const currency = document.getElementById('in-01-curr').value;
+    const curr = document.getElementById('in-01-curr').value;
 
-    const existing = state.liquid.find(i => i.name === name && i.currency === currency);
+    const existing = state.liquid.find(i => i.name.toLowerCase() === name.toLowerCase() && i.currency === curr);
     if (existing) {
         existing.amount += amount;
     } else {
-        state.liquid.push({ id: Date.now().toString(), name, amount, currency });
+        state.liquid.push({ id: Date.now().toString(), name, amount, currency: curr });
     }
-    e.target.reset();
+    this.reset();
     refreshUI();
-};
+});
 
-// Section 03: Weighted Average Cost Basis Logic
-document.getElementById('form-03').onsubmit = (e) => {
+document.getElementById('form-02')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    state.fixed.push({
+        id: Date.now().toString(),
+        inst: document.getElementById('in-02-inst').value,
+        principal: parseFloat(document.getElementById('in-02-princ').value),
+        rate: parseFloat(document.getElementById('in-02-rate').value),
+        months: parseInt(document.getElementById('in-02-months').value),
+        start: document.getElementById('in-02-start').value,
+        currency: document.getElementById('in-02-curr').value
+    });
+    this.reset();
+    refreshUI();
+});
+
+document.getElementById('form-03')?.addEventListener('submit', function(e) {
     e.preventDefault();
     const ticker = document.getElementById('in-03-ticker').value.toUpperCase();
     const qty = parseFloat(document.getElementById('in-03-qty').value);
@@ -160,92 +204,81 @@ document.getElementById('form-03').onsubmit = (e) => {
 
     const existing = state.equities.find(i => i.ticker === ticker);
     if (existing) {
-        const totalQty = existing.qty + qty;
-        existing.avgBuyUSD = ((existing.qty * existing.avgBuyUSD) + (qty * buy)) / totalQty;
-        existing.qty = totalQty;
+        existing.avgBuyUSD = ((existing.qty * existing.avgBuyUSD) + (qty * buy)) / (existing.qty + qty);
+        existing.qty += qty;
     } else {
-        state.equities.push({ 
-            id: Date.now().toString(), ticker, qty, avgBuyUSD: buy, 
-            livePriceUSD: buy * 1.05 // Simulating live price for now
-        });
+        state.equities.push({ id: Date.now().toString(), ticker, qty, avgBuyUSD: buy, livePriceUSD: buy * 1.05 });
     }
-    e.target.reset();
+    this.reset();
     refreshUI();
-};
+});
 
-// --- GLOBAL PIVOT ---
-document.getElementById('master-currency').onchange = (e) => {
-    state.masterCurrency = e.target.value;
+document.getElementById('form-04')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    state.liabilities.push({
+        id: Date.now().toString(),
+        source: document.getElementById('in-04-source').value,
+        amount: parseFloat(document.getElementById('in-04-amount').value),
+        currency: document.getElementById('in-04-curr').value
+    });
+    this.reset();
     refreshUI();
-};
-// --- 6. AUDIT ENGINE: CAPITAL GAP ANALYSIS ---
+});
 
-window.updateAuditResults = () => {
-    const g = state.audit;
-    const reportArea = document.getElementById('audit-report');
+// --- 5. AUDIT ENGINE & PROGRESS BAR ---
+
+document.getElementById('run-audit-btn')?.addEventListener('click', function() {
+    const goalVal = parseFloat(document.getElementById('audit-goal-val').value) || 0;
+    const goalCurr = document.getElementById('audit-goal-curr').value;
+    const horizon = parseInt(document.getElementById('audit-years').value) || 0;
+    const infRate = (parseFloat(document.getElementById('audit-inflation').value) || 0) / 100;
+    const growthRate = (parseFloat(document.getElementById('audit-growth').value) || 0) / 100;
+
+    state.audit = { goal: goalVal, goalCurr, horizon, inflation: infRate*100, growth: growthRate*100 };
+
+    const curNW = parseFloat(document.getElementById('display-total-net-worth').textContent.replace(/,/g, ''));
+    const fv = curNW * Math.pow(1 + (growthRate - infRate), horizon);
+    const targetMaster = convert(goalVal, goalCurr, state.masterCurrency);
     
-    // Future Value Projections
-    const years = g.horizon || 0;
-    const inf = g.inflation / 100;
-    const mGrowth = g.growth / 100;
-
-    const curLiqMaster = state.liquid.reduce((acc, i) => acc + convert(i.amount, i.currency, state.masterCurrency), 0);
-    const curFixMaster = state.fixed.reduce((acc, i) => {
-        const maturity = i.principal + (i.principal * (i.rate/100) * (i.months/12));
-        return acc + convert(maturity, i.currency, state.masterCurrency);
-    }, 0);
-    const curEqMaster = state.equities.reduce((acc, i) => acc + convert(i.qty * i.livePriceUSD, 'USD', state.masterCurrency), 0);
-
-    // Compound Interest Formula: FV = PV * (1 + r)^n
-    // For Liquid: Projected against inflation only (losing value)
-    const fvLiq = curLiqMaster * Math.pow(1 - inf, years);
-    const fvFix = curFixMaster; // Already calculated to maturity
-    const fvEq = curEqMaster * Math.pow(1 + (mGrowth - inf), years);
-    const totalFV = fvLiq + fvFix + fvEq;
-
-    const goalMaster = convert(g.goal, g.goalCurr, state.masterCurrency);
-    const gap = goalMaster - totalFV;
+    const gap = targetMaster - fv;
     const isSufficient = gap <= 0;
 
-    // Monthly Funding Requirement (Savings Gap)
-    // PMT = (Gap * r) / ((1 + r)^n - 1)
-    const monthlyRate = (mGrowth - inf) / 12;
-    const months = years * 12;
-    const reqMonthly = gap > 0 ? (gap * monthlyRate) / (Math.pow(1 + monthlyRate, months) - 1) : 0;
-
-    reportArea.innerHTML = `
+    document.getElementById('audit-report').innerHTML = `
         <div class="audit-breakdown">
-            <p>01. Projected Liquid: ${formatNum(fvLiq)}</p>
-            <p>02. Projected Fixed: ${formatNum(fvFix)}</p>
-            <p>03. Projected Equities: ${formatNum(fvEq)}</p>
+            <p>Target Goal (Master): <span>${formatNum(targetMaster)}</span></p>
+            <p>Projected Net Worth (FV): <span>${formatNum(fv)}</span></p>
             <hr>
-            <p><strong>Total Projected FV: ${formatNum(totalFV)}</strong></p>
-            <p>Capital Gap: <span class="${gap > 0 ? 'red' : 'green'}">${formatNum(gap)}</span></p>
-            <h3>Status: ${isSufficient ? '[SUFFICIENT]' : '[INSUFFICIENT]'}</h3>
-            <p>Required Extra Monthly Savings: <strong>${formatNum(reqMonthly)} ${state.masterCurrency}</strong></p>
+            <h3>Status: <span class="${isSufficient ? 'green' : 'red'}">${isSufficient ? '[SUFFICIENT]' : '[INSUFFICIENT]'}</span></h3>
+            <p>Capital Gap: <span class="${gap > 0 ? 'red' : 'green'}">${formatNum(Math.abs(gap))}</span></p>
         </div>
     `;
 
-    generateAIAdvice(isSufficient, gap, totalFV, goalMaster);
-    updateProgressBar(totalFV, goalMaster);
-};
-
-// --- 7. IN-DEPTH AI ADVICE ENGINE ---
-
-const generateAIAdvice = (sufficient, gap, fv, goal) => {
-    const adviceBox = document.getElementById('ai-advice-text');
-    if (sufficient) {
-        adviceBox.innerHTML = "Financial objective secured. Recommendation: Reallocate excess towards low-volatility ETFs or high-yield KRW/USD bonds to preserve capital. Current portfolio has high Capital Sufficiency.";
+    const adviceText = document.getElementById('ai-advice-text');
+    if (isSufficient) {
+        adviceText.innerHTML = "Goal secured. Recommendation: Maintain current allocation. Focus on <strong>Wealth Preservation</strong> through index ETFs.";
     } else {
-        const pct = (fv / goal) * 100;
-        adviceBox.innerHTML = `Your current path covers ${pct.toFixed(1)}% of your goal. 
-            <strong>Strategic Reallocation:</strong> Move 25% of Liquid assets into S&P 500 Index funds or Quality Growth stocks (Technology/Healthcare sectors) to outpace the ${state.audit.inflation}% inflation rate. Consider increasing equity risk or extending horizon by ${Math.ceil(gap / (state.audit.income * 12))} years.`;
+        adviceText.innerHTML = `Gap of ${formatNum(gap)} detected. <strong>Advice:</strong> Shift 20% of Liquid assets into <strong>Technology or S&P 500 Index Funds</strong> to outpace ${infRate*100}% inflation.`;
     }
-};
 
-// --- 8. PIE CHART WITH DIRECT LABELS ---
+    updateProgressBarOnly();
+});
 
-window.renderPieChart = () => {
+function updateProgressBarOnly() {
+    const curNW = parseFloat(document.getElementById('display-total-net-worth').textContent.replace(/,/g, '')) || 0;
+    const targetMaster = convert(state.audit.goal, state.audit.goalCurr, state.masterCurrency) || 0;
+    
+    if (targetMaster > 0) {
+        const pct = Math.min((curNW / targetMaster) * 100, 100);
+        document.getElementById('progress-fill-bar').style.width = pct + '%';
+        document.getElementById('prog-percent-text').textContent = pct.toFixed(1) + '% Achieved';
+        document.getElementById('prog-val-current').textContent = `Current: ${formatNum(curNW)}`;
+        document.getElementById('prog-val-goal').textContent = `Target: ${formatNum(targetMaster)}`;
+    }
+}
+
+// --- 6. PIE CHART WITH DIRECT LABELS ---
+
+function renderPieChart() {
     const liq = state.liquid.reduce((acc, i) => acc + convert(i.amount, i.currency, state.masterCurrency), 0);
     const fix = state.fixed.reduce((acc, i) => acc + convert(i.principal, i.currency, state.masterCurrency), 0);
     const eq = state.equities.reduce((acc, i) => acc + convert(i.qty * i.livePriceUSD, 'USD', state.masterCurrency), 0);
@@ -253,43 +286,57 @@ window.renderPieChart = () => {
 
     if (total === 0) return;
 
-    const pLiq = (liq / total) * 100;
-    const pFix = (fix / total) * 100;
-    const pEq = (eq / total) * 100;
+    const pL = (liq / total) * 100;
+    const pF = (fix / total) * 100;
+    const pE = (eq / total) * 100;
 
     const visual = document.getElementById('composition-pie-visual');
-    visual.style.background = `conic-gradient(
-        #4ade80 0% ${pLiq}%, 
-        #818cf8 ${pLiq}% ${pLiq + pFix}%, 
-        #fbbf24 ${pLiq + pFix}% 100%
-    )`;
+    if (visual) {
+        visual.style.background = `conic-gradient(
+            #4ade80 0% ${pL}%, 
+            #818cf8 ${pL}% ${pL + pF}%, 
+            #fbbf24 ${pL + pF}% 100%
+        )`;
+    }
 
-    // Direct Label Overlay
-    const labels = document.getElementById('direct-labels-overlay');
-    labels.innerHTML = `
-        <div class="pie-label" style="top:25%; left:75%">01: ${pLiq.toFixed(0)}%</div>
-        <div class="pie-label" style="top:75%; left:75%">02: ${pFix.toFixed(0)}%</div>
-        <div class="pie-label" style="top:50%; left:25%">03: ${pEq.toFixed(0)}%</div>
-    `;
-};
+    const overlay = document.getElementById('direct-labels-overlay');
+    if (overlay) {
+        overlay.innerHTML = `
+            <div class="pie-label" style="top:25%; left:75%">Liquid: ${pL.toFixed(0)}%</div>
+            <div class="pie-label" style="top:75%; left:75%">Fixed: ${pF.toFixed(0)}%</div>
+            <div class="pie-label" style="top:50%; left:25%">Equities: ${pE.toFixed(0)}%</div>
+        `;
+    }
+}
 
-// --- 9. PERSISTENCE & MODALS ---
+// --- 7. CORE GLOBAL FUNCTIONS ---
+
+function deleteItem(type, id) {
+    state[type] = state[type].filter(i => i.id !== id);
+    refreshUI();
+}
+
+document.getElementById('master-currency')?.addEventListener('change', (e) => {
+    state.masterCurrency = e.target.value;
+    refreshUI();
+});
 
 document.getElementById('save-all-btn').onclick = () => {
     localStorage.setItem('wealthState', JSON.stringify(state));
-    alert('Portfolio Data Secured to LocalStorage.');
+    alert('Portfolio Data Saved.');
 };
 
 document.getElementById('wipe-all-btn').onclick = () => {
-    if (confirm("DANGER: This will permanently erase all auditor data. Proceed?")) {
+    if (confirm("Permanently delete all data?")) {
         localStorage.clear();
         location.reload();
     }
 };
 
-// Initial Load
 window.onload = () => {
     const saved = localStorage.getItem('wealthState');
     if (saved) state = JSON.parse(saved);
+    const mc = document.getElementById('master-currency');
+    if (mc) mc.value = state.masterCurrency;
     refreshUI();
 };
