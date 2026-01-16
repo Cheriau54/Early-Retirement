@@ -198,8 +198,13 @@
                 <div id="logic-output" class="logic-box-full"></div>
 
                 <div class="progress-container">
-                    <div id="progress-bar"></div>
-                    <span id="progress-text">0% Achieved</span>
+                    <div class="progress-label-top">
+                        <span id="progress-val-achieved">0</span> / <span id="progress-val-target">0</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progress-bar"></div>
+                        <span id="progress-text">0% Achieved</span>
+                    </div>
                 </div>
             </section>
 
@@ -207,7 +212,8 @@
                 <h3>Asset Allocation</h3>
                 <div class="chart-flex">
                     <div id="allocation-pie" class="pie-chart"></div>
-                    <div id="chart-legend" class="legend"></div>
+                    <div id="chart-legend" class="legend">
+                        </div>
                 </div>
             </section>
         </div>
