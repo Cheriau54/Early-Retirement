@@ -13,7 +13,7 @@
                 <h1 id="editable-title" contenteditable="true">Wealth Tracker</h1>
                 <div class="header-controls">
                     <div class="master-pivot">
-                        <label>Dashboard Pivot:</label>
+                        <label>Base Currency:</label>
                         <select id="master-currency" class="curr-list"></select>
                     </div>
                     <button id="save-all-btn" class="save-btn">Save Progress</button>
@@ -30,12 +30,15 @@
             <section class="card">
                 <div class="card-header">
                     <h3>1. Liquid Assets</h3>
-                    <div id="acc-liq" class="sec-accum"></div>
+                    <div class="header-value-grp">
+                        <span id="acc-liq" class="sec-accum">0</span>
+                        <span class="header-curr-label"></span>
+                    </div>
                 </div>
                 <form id="form-liquid" class="entry-form">
                     <div class="input-row">
-                        <input type="text" id="liq-name" placeholder="Bank" required>
-                        <input type="number" id="liq-amount" placeholder="Amount $" step="0.01" required>
+                        <input type="text" id="liq-name" placeholder="Bank Name" required>
+                        <input type="number" id="liq-amount" placeholder="Amount" step="0.01" required>
                         <select id="liq-curr" class="curr-list"></select>
                         <button type="submit">Add</button>
                     </div>
@@ -43,7 +46,7 @@
                 <div class="scroll-area">
                     <table id="table-liquid">
                         <thead>
-                            <tr><th>Bank</th><th>Amount $</th><th>Value $</th><th>Actions</th></tr>
+                            <tr><th>Bank</th><th>Amount</th><th>Base Val</th><th>Actions</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -53,7 +56,10 @@
             <section class="card">
                 <div class="card-header">
                     <h3>2. Fixed Savings</h3>
-                    <div id="acc-fix" class="sec-accum surplus"></div>
+                    <div class="header-value-grp">
+                        <span id="acc-fix" class="sec-accum surplus">0</span>
+                        <span class="header-curr-label"></span>
+                    </div>
                 </div>
                 <form id="form-fixed" class="entry-form">
                     <div class="input-row">
@@ -74,7 +80,7 @@
                 <div class="scroll-area">
                     <table id="table-fixed">
                         <thead>
-                            <tr><th>Bank</th><th>Rate</th><th>End Date</th><th>Interest $</th><th>Total $</th><th>Actions</th></tr>
+                            <tr><th>Bank</th><th>Rate</th><th>End Date</th><th>Interest</th><th>Total</th><th>Actions</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -83,12 +89,15 @@
 
             <section class="card">
                 <div class="card-header">
-                    <h3>3. Equities (USD)</h3>
-                    <div id="acc-stk" class="sec-accum"></div>
+                    <h3>3. Equities (USD Context)</h3>
+                    <div class="header-value-grp">
+                        <span id="acc-stk" class="sec-accum">0</span>
+                        <span class="header-curr-label"></span>
+                    </div>
                 </div>
                 <form id="form-stocks" class="entry-form">
                     <div class="input-row">
-                        <input type="text" id="stk-ticker" placeholder="Ticker" required>
+                        <input type="text" id="stk-ticker" placeholder="Ticker (e.g. AAPL)" required>
                         <input type="number" id="stk-qty" placeholder="Qty" step="0.01" required>
                         <input type="number" id="stk-buy" placeholder="Avg Buy $" step="0.01" required>
                         <button type="submit">Add</button>
@@ -107,12 +116,15 @@
             <section class="card">
                 <div class="card-header">
                     <h3>4. Liabilities</h3>
-                    <div id="acc-debt" class="sec-accum loss"></div>
+                    <div class="header-value-grp">
+                        <span id="acc-debt" class="sec-accum loss">0</span>
+                        <span class="header-curr-label"></span>
+                    </div>
                 </div>
                 <form id="form-debt" class="entry-form">
                     <div class="input-row">
-                        <input type="text" id="debt-name" placeholder="Name" required>
-                        <input type="number" id="debt-amount" placeholder="Owed $" step="0.01" required>
+                        <input type="text" id="debt-name" placeholder="Lender Name" required>
+                        <input type="number" id="debt-amount" placeholder="Owed" step="0.01" required>
                         <select id="debt-curr" class="curr-list"></select>
                         <button type="submit">Add</button>
                     </div>
@@ -120,7 +132,7 @@
                 <div class="scroll-area">
                     <table id="table-debt">
                         <thead>
-                            <tr><th>Name</th><th>Owed $</th><th>Value $</th><th>Actions</th></tr>
+                            <tr><th>Name</th><th>Owed</th><th>Base Val</th><th>Actions</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -129,8 +141,8 @@
         </div>
 
         <div class="strategy-row">
-            <section class="card planner-card">
-                <h3>Financial Audit & Retirement Projection</h3>
+            <section class="card audit-full-card">
+                <h3>Logical Deduction & Financial Audit</h3>
                 <div class="planner-inputs">
                     <div class="p-field">Goal: <input type="number" id="target-goal"> <select id="goal-curr" class="curr-list"></select></div>
                     <div class="p-field">Years: <input type="number" id="years-to-goal"></div>
@@ -146,27 +158,28 @@
                             <select id="income-curr" class="curr-list"></select>
                         </div>
                     </div>
-                    <button id="calc-btn" class="primary-btn">Update Audit</button>
+                    <button id="calc-btn" class="primary-btn">Refresh Audit</button>
                 </div>
-                <div id="logic-output" class="logic-box"></div>
+                
+                <div id="logic-output" class="logic-box-full"></div>
+                
                 <div class="progress-container">
                     <div id="progress-bar"></div>
                     <span id="progress-text">0% Achieved</span>
                 </div>
             </section>
 
-            <section class="card">
-                <h3>Asset Allocation & Rebalancing</h3>
+            <section class="card allocation-card">
+                <h3>Asset Allocation</h3>
                 <div class="chart-flex">
                     <div id="allocation-pie" class="pie-chart"></div>
                     <div id="chart-legend" class="legend"></div>
                 </div>
-                <div id="rebalance-suggestion" class="suggestion-box"></div>
             </section>
         </div>
         
         <footer class="footer-area">
-            <button id="reset-btn" class="danger-btn">Wipe All Data</button>
+            <button id="reset-btn" class="danger-btn">Wipe System Data</button>
         </footer>
     </div>
     <script src="script.js"></script>
