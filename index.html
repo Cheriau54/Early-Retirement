@@ -89,7 +89,10 @@
 
             <section class="card">
                 <div class="card-header">
-                    <h3>3. Equities (USD Context)</h3>
+                    <div class="header-left">
+                        <h3>3. Equities (USD)</h3>
+                        <button id="refresh-stocks-btn" class="refresh-mini-btn">↻ Refresh Live</button>
+                    </div>
                     <div class="header-value-grp">
                         <span id="acc-stk" class="sec-accum">0</span>
                         <span class="header-curr-label"></span>
@@ -97,7 +100,7 @@
                 </div>
                 <form id="form-stocks" class="entry-form">
                     <div class="input-row">
-                        <input type="text" id="stk-ticker" placeholder="Ticker (e.g. AAPL)" required>
+                        <input type="text" id="stk-ticker" placeholder="Ticker" required>
                         <input type="number" id="stk-qty" placeholder="Qty" step="0.01" required>
                         <input type="number" id="stk-buy" placeholder="Avg Buy $" step="0.01" required>
                         <button type="submit">Add</button>
@@ -123,7 +126,7 @@
                 </div>
                 <form id="form-debt" class="entry-form">
                     <div class="input-row">
-                        <input type="text" id="debt-name" placeholder="Lender Name" required>
+                        <input type="text" id="debt-name" placeholder="Name" required>
                         <input type="number" id="debt-amount" placeholder="Owed" step="0.01" required>
                         <select id="debt-curr" class="curr-list"></select>
                         <button type="submit">Add</button>
@@ -160,9 +163,7 @@
                     </div>
                     <button id="calc-btn" class="primary-btn">Refresh Audit</button>
                 </div>
-                
                 <div id="logic-output" class="logic-box-full"></div>
-                
                 <div class="progress-container">
                     <div id="progress-bar"></div>
                     <span id="progress-text">0% Achieved</span>
