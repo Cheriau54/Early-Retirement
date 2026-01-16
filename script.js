@@ -32,7 +32,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 function initUI() {
-    // Populate all currency dropdowns across the application
+    // Populate all currency dropdowns
     const dropdowns = document.querySelectorAll('.curr-list');
     dropdowns.forEach(select => {
         CURRENCIES.forEach(curr => {
@@ -41,7 +41,7 @@ function initUI() {
         });
     });
     
-    // Explicitly set all settings values from database
+    // Set settings values from database
     const s = db.settings;
     document.getElementById('master-currency').value = s.masterCurr;
     document.getElementById('target-goal').value = s.goal;
@@ -66,7 +66,7 @@ function initUI() {
         saveModalEdit();
     };
 
-    /* --- ADD FORM HANDLERS (SMART MERGING) --- */
+    /* --- ADD FORM HANDLERS (WITH SMART MERGE & TIMESTAMPING) --- */
     document.getElementById('form-liquid').onsubmit = (e) => {
         e.preventDefault();
         const n = document.getElementById('liq-name').value;
@@ -75,6 +75,7 @@ function initUI() {
         const idx = db.liquid.findIndex(i => i.name.toLowerCase() === n.toLowerCase() && i.currency === c);
         if(idx > -1) {
             db.liquid[idx].amount += a;
+            db.liquid[idx].id = Date.now(); // Move to top of latest list
         } else {
             db.liquid.unshift({id: Date.now(), name: n, amount: a, currency: c});
         }
@@ -105,6 +106,7 @@ function initUI() {
             const s = db.stocks[idx];
             s.buyPrice = ((s.buyPrice * s.qty) + (b * q)) / (s.qty + q);
             s.qty += q;
+            s.id = Date.now(); // Update timestamp
         } else { 
             db.stocks.unshift({id: Date.now(), ticker: t, qty: q, buyPrice: b}); 
         }
@@ -149,28 +151,27 @@ function save() {
 async function refreshAll(fullFetch = true, skipStocks = true) {
     const mCurr = db.settings.masterCurr;
     
-    // Update all Currency Labels across headers
+    // Update all Currency Labels
     document.querySelectorAll('.header-curr-label').forEach(el => el.innerText = mCurr);
 
-    // Fetch Forex Rates from API
+    // Fetch Forex Rates
     try {
         const res = await fetch(`https://v6.exchangerate-api.com/v6/${FX_API}/latest/${mCurr}`).then(r => r.json());
         if (res.conversion_rates) {
             rates = res.conversion_rates;
         }
     } catch(e) { 
-        console.error("Forex Sync Failed. Using local cache if available."); 
+        console.error("Forex Sync Failed."); 
     }
 
     // Accumulators for Portfolio Totals
     let t = { liq: 0, fix: 0, stk: 0, debt: 0, yield: 0, stockPL: 0 };
 
-    // 1. Render Liquid Assets
+    // 1. Render Liquid Assets (Show latest 3)
     const liqBody = document.querySelector('#table-liquid tbody');
     liqBody.innerHTML = '';
-    db.liquid.forEach(i => {
+    db.liquid.sort((a,b) => b.id - a.id).slice(0, 3).forEach(i => {
         const mv = i.amount / rates[i.currency];
-        t.liq += mv;
         liqBody.innerHTML += `
             <tr>
                 <td>${i.name}</td>
@@ -182,18 +183,15 @@ async function refreshAll(fullFetch = true, skipStocks = true) {
                 </td>
             </tr>`;
     });
+    db.liquid.forEach(i => t.liq += (i.amount / rates[i.currency]));
 
-    // 2. Render Fixed Savings (Principal + Projected Interest)
+    // 2. Render Fixed Savings (Show latest 3)
     const fixBody = document.querySelector('#table-fixed tbody');
     fixBody.innerHTML = '';
-    db.fixed.forEach(i => {
+    db.fixed.sort((a,b) => b.id - a.id).slice(0, 3).forEach(i => {
         const interest = i.principal * (i.rate / 100) * (i.duration / 12);
         const totalAtMaturity = i.principal + interest;
-        const mv = totalAtMaturity / rates[i.currency];
         const endD = new Date(new Date(i.start).setMonth(new Date(i.start).getMonth() + i.duration)).toISOString().split('T')[0];
-        
-        t.fix += mv;
-        t.yield += (mv * (i.rate / 100)); // Add to weighted yield
         
         fixBody.innerHTML += `
             <tr>
@@ -208,11 +206,17 @@ async function refreshAll(fullFetch = true, skipStocks = true) {
                 </td>
             </tr>`;
     });
+    db.fixed.forEach(i => {
+        const mv = (i.principal + (i.principal * (i.rate / 100) * (i.duration / 12))) / rates[i.currency];
+        t.fix += mv;
+        t.yield += (mv * (i.rate / 100));
+    });
 
-    // 3. Render Equities (Live Stock API + P/L Logic)
+    // 3. Render Equities (Show latest 3)
     const stkBody = document.querySelector('#table-stocks tbody');
     stkBody.innerHTML = '';
-    for (let s of db.stocks) {
+    const sortedStocks = db.stocks.sort((a,b) => b.id - a.id);
+    for (let s of sortedStocks) {
         if (!skipStocks || !s.lastLive) {
             try {
                 const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${s.ticker}&apikey=${STOCK_API}`).then(r => r.json());
@@ -223,34 +227,34 @@ async function refreshAll(fullFetch = true, skipStocks = true) {
             }
         }
         const marketValUSD = s.qty * s.lastLive;
-        const mvMaster = marketValUSD / rates.USD; // Stocks assumed in USD
-        
+        const mvMaster = marketValUSD / rates.USD;
         t.stk += mvMaster;
         t.yield += (mvMaster * (db.settings.stkGrowth / 100));
         
         const plUSD = (s.lastLive - s.buyPrice) * s.qty;
         t.stockPL += plUSD / rates.USD;
 
-        stkBody.innerHTML += `
-            <tr>
-                <td>${s.ticker}</td>
-                <td>${s.qty.toLocaleString()}</td>
-                <td>$${s.buyPrice.toLocaleString()}</td>
-                <td>$${s.lastLive.toLocaleString()}</td>
-                <td class="${plUSD >= 0 ? 'surplus' : 'loss'}">${plUSD.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                <td>
-                    <button class="btn-edit" onclick="openModal('stocks',${s.id})">Edit</button>
-                    <button class="btn-del" onclick="del('stocks',${s.id})">✕</button>
-                </td>
-            </tr>`;
+        if (sortedStocks.indexOf(s) < 3) {
+            stkBody.innerHTML += `
+                <tr>
+                    <td>${s.ticker}</td>
+                    <td>${s.qty.toLocaleString()}</td>
+                    <td>$${s.buyPrice.toLocaleString()}</td>
+                    <td>$${s.lastLive.toLocaleString()}</td>
+                    <td class="${plUSD >= 0 ? 'surplus' : 'loss'}">${plUSD.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td>
+                        <button class="btn-edit" onclick="openModal('stocks',${s.id})">Edit</button>
+                        <button class="btn-del" onclick="del('stocks',${s.id})">✕</button>
+                    </td>
+                </tr>`;
+        }
     }
 
-    // 4. Render Debt/Liabilities
+    // 4. Render Debt (Show latest 3)
     const debtBody = document.querySelector('#table-debt tbody');
     debtBody.innerHTML = '';
-    db.debt.forEach(i => {
+    db.debt.sort((a,b) => b.id - a.id).slice(0, 3).forEach(i => {
         const mv = i.amount / rates[i.currency];
-        t.debt += mv;
         debtBody.innerHTML += `
             <tr>
                 <td>${i.name}</td>
@@ -262,8 +266,9 @@ async function refreshAll(fullFetch = true, skipStocks = true) {
                 </td>
             </tr>`;
     });
+    db.debt.forEach(i => t.debt += (i.amount / rates[i.currency]));
 
-    // Update Header Dashboard UI
+    // Update Totals UI
     const netWorth = t.liq + t.fix + t.stk - t.debt;
     document.getElementById('total-net-worth').innerText = netWorth.toLocaleString(undefined, {maximumFractionDigits: 0}) + " " + mCurr;
     document.getElementById('acc-liq').innerText = t.liq.toLocaleString(undefined, {maximumFractionDigits: 0});
@@ -279,42 +284,61 @@ async function refreshAll(fullFetch = true, skipStocks = true) {
     updatePie(t);
 }
 
-/* --- LOGICAL DEDUCTION (AUDIT) ENGINE --- */
+/* --- LOGICAL DEDUCTION (AUDIT) & PROGRESS BAR --- */
 function renderAudit(nw, t) {
     const s = db.settings;
     const nwGoalBase = (nw * rates[db.settings.masterCurr]) / rates[s.goalCurr];
     const totalAssets = t.liq + t.fix + t.stk;
     const nominalYield = totalAssets > 0 ? (t.yield / totalAssets) : 0;
-    
-    // Real Yield = [(1 + Nominal) / (1 + Inflation)] - 1
     const realYield = ((1 + nominalYield) / (1 + (s.inflation / 100))) - 1;
-    const monthlyRate = realYield / 12;
-    const totalMonths = s.years * 12;
-    
+    const monthlyRate = realYield / 12, totalMonths = s.years * 12;
     const futureVal = nwGoalBase * Math.pow(1 + monthlyRate, totalMonths);
     const gap = Math.max(0, s.goal - futureVal);
-    
-    // PMT Formula: (Gap * r) / ((1 + r)^n - 1)
     const monthlySavingsReq = gap > 0 ? (gap * monthlyRate) / (Math.pow(1 + monthlyRate, totalMonths) - 1) : 0;
-    
-    let monthlyIncomeConverted = (s.income / rates[s.incomeCurr]) * rates[s.goalCurr];
-    if (s.incomeFreq === 'annual') monthlyIncomeConverted /= 12;
 
     document.getElementById('logic-output').innerHTML = `
-        <div class="audit-line"><span>Proj. Real Yield (Inflation Adjusted)</span><b>${(realYield * 100).toFixed(2)}%</b></div>
-        <div class="audit-line"><span>Proj. Portfolio Value (${s.years}y)</span><b>${futureVal.toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line"><span>Target Gap to Goal</span><b class="loss">${gap.toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}</b></div>
+        <div class="audit-line"><span>Proj. Real Yield</span><b>${(realYield * 100).toFixed(2)}%</b></div>
+        <div class="audit-line"><span>Proj. Portfolio Value</span><b>${futureVal.toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}</b></div>
         <div class="audit-line"><span>Monthly Savings Required</span><b class="surplus">${monthlySavingsReq.toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}</b></div>
-        <div class="audit-line" style="border-top:1px solid #444;margin-top:10px;padding-top:10px">
-            <span><b>Investment Plan Health (Surplus)</b></span>
-            <b class="${monthlyIncomeConverted - monthlySavingsReq >= 0 ? 'surplus' : 'loss'}">
-                ${(monthlyIncomeConverted - monthlySavingsReq).toLocaleString(undefined, {maximumFractionDigits:0})} ${s.goalCurr}
-            </b>
-        </div>
     `;
 
+    // Dynamic Progress Bar Update
     const progressPercent = Math.min((nwGoalBase / s.goal) * 100, 100);
     document.getElementById('progress-bar').style.width = progressPercent + "%";
+    document.getElementById('progress-text').innerText = progressPercent.toFixed(1) + "% Achieved";
+    document.getElementById('progress-val-achieved').innerText = nwGoalBase.toLocaleString(undefined, {maximumFractionDigits: 0}) + " " + s.goalCurr;
+    document.getElementById('progress-val-target').innerText = s.goal.toLocaleString() + " " + s.goalCurr;
+}
+
+/* --- ASSET ALLOCATION PIE & LEGEND --- */
+function updatePie(t) {
+    const total = t.liq + t.fix + t.stk;
+    const mCurr = db.settings.masterCurr;
+    const legend = document.getElementById('chart-legend');
+    legend.innerHTML = '';
+    if (total <= 0) return;
+
+    const cats = [
+        { label: 'Liquid', val: t.liq, color: '#818cf8' },
+        { label: 'Fixed', val: t.fix, color: '#c084fc' },
+        { label: 'Stocks', val: t.stk, color: '#4ade80' }
+    ];
+
+    let currentStep = 0;
+    const gradient = cats.map(c => {
+        const pct = (c.val / total) * 100;
+        const start = currentStep;
+        currentStep += pct;
+        legend.innerHTML += `
+            <div class="legend-item">
+                <span class="dot" style="background:${c.color}"></span>
+                <span class="lab">${c.label}</span>
+                <span class="pct">${pct.toFixed(1)}%</span>
+                <span class="val">${c.val.toLocaleString(undefined, {maximumFractionDigits:0})} ${mCurr}</span>
+            </div>`;
+        return `${c.color} ${start}% ${currentStep}%`;
+    }).join(', ');
+    document.getElementById('allocation-pie').style.background = `conic-gradient(${gradient})`;
 }
 
 /* --- MODAL EDIT SYSTEM --- */
@@ -352,9 +376,7 @@ function openModal(category, id) {
     document.getElementById('edit-modal').style.display = 'flex';
 }
 
-function closeModal() { 
-    document.getElementById('edit-modal').style.display = 'none'; 
-}
+function closeModal() { document.getElementById('edit-modal').style.display = 'none'; }
 
 function saveModalEdit() {
     const { category, id } = currentEditState;
@@ -389,9 +411,9 @@ function del(category, id) {
     refreshAll(false);
 }
 
-function updatePie(t) {
-    const tot = t.liq + t.fix + t.stk;
-    if (tot <= 0) return;
-    const pL = (t.liq/tot)*100, pF = (t.fix/tot)*100, pS = (t.stk/tot)*100;
-    document.getElementById('allocation-pie').style.background = `conic-gradient(#818cf8 0% ${pL}%, #c084fc ${pL}% ${pL+pF}%, #4ade80 ${pL+pF}% 100%)`;
-}
+document.getElementById('reset-btn').onclick = () => {
+    if(confirm("Wipe all data? This cannot be undone.")) {
+        localStorage.clear();
+        location.reload();
+    }
+};
